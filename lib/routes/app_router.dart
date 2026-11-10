@@ -14,6 +14,7 @@ import '../screens/walking_screen.dart';
 import '../screens/walking_map_screen.dart';
 import '../repositories/walking_repository.dart';
 import '../screens/walking_summary_screen.dart';
+import '../screens/history_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
@@ -59,11 +60,12 @@ GoRoute(
             builder: (context, state) =>
                 const _PlaceholderScreen(title: 'İstatistikler'),
           ),
-          GoRoute(
-            path: '/history',
-            builder: (context, state) =>
-                const _PlaceholderScreen(title: 'Geçmiş'),
-          ),
+       GoRoute(
+  path: '/history',
+  builder: (context, state) => HistoryScreen(
+    repository: walkingRepository,
+  ),
+),
           GoRoute(
             path: '/profile',
             builder: (context, state) =>
