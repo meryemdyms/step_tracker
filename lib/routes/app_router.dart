@@ -9,6 +9,7 @@ import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/user_info_screen.dart';
 import '../screens/permissions_screen.dart';
+import '../screens/home_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
@@ -39,11 +40,12 @@ GoRouter createAppRouter(AppDatabase database) {
           return MainShell(child: child);
         },
         routes: [
-          GoRoute(
-            path: '/home',
-            builder: (context, state) =>
-                const _PlaceholderScreen(title: 'Ana Sayfa'),
-          ),
+GoRoute(
+  path: '/home',
+  builder: (context, state) => HomeScreen(
+    repository: profileRepository,
+  ),
+),
           GoRoute(
             path: '/walking',
             builder: (context, state) =>
