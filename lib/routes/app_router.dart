@@ -11,9 +11,12 @@ import '../screens/user_info_screen.dart';
 import '../screens/permissions_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/walking_screen.dart';
+import '../screens/walking_map_screen.dart';
+import '../repositories/walking_repository.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
+  final walkingRepository = WalkingRepository(database);
 
   return GoRouter(
     initialLocation: '/splash',
@@ -68,11 +71,12 @@ GoRoute(
         ],
       ),
 
-      GoRoute(
-        path: '/walking-map',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Canlı Harita'),
-      ),
+     GoRoute(
+  path: '/walking-map',
+  builder: (context, state) => WalkingMapScreen(
+    walkingRepository: walkingRepository,
+  ),
+),
       GoRoute(
         path: '/walking-summary',
         builder: (context, state) =>

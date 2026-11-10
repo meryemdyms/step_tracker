@@ -81,44 +81,65 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
     }
   }
 
-  Future<void> _requestLocationPermission() async {
-    if ((!_isAndroid && !_isIOS) || _isLoading) return;
+  
+Future<void> _requestLocationPermission() async {
+  if ((!_isAndroid && !_isIOS) || _isLoading) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final enabled = await Geolocator.isLocationServiceEnabled();
+  try {
+    final serviceEnabled =
+        await Geolocator.isLocationServiceEnabled();
 
-      if (!enabled) {
-        _showMessage('Önce cihazının konum servisini açmalısın.');
-        return;
-      }
-
-      var status = await Geolocator.checkPermission();
-
-      if (status == LocationPermission.denied) {
-        status = await Geolocator.requestPermission();
-      }
-
+    if (!serviceEnabled) {
       if (!mounted) return;
 
-      setState(() {
-        _locationGranted =
-            status == LocationPermission.whileInUse ||
-            status == LocationPermission.always;
-      });
+      _showMessage('Telefonunun konum servisi kapalı.');
 
-      if (status == LocationPermission.deniedForever) {
-        _showMessage(
-          'Konum iznini cihaz ayarlarından açabilirsin.',
-        );
-      }
-    } catch (_) {
-      _showMessage('Konum izni istenemedi.');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      await Geolocator.openLocationSettings();
+      return;
+    }
+
+    var permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (!mounted) return;
+
+    if (permission == LocationPermission.deniedForever) {
+      _showMessage(
+        'Konum izni kalıcı olarak reddedilmiş. '
+        'Lütfen uygulama ayarlarından izin ver.',
+      );
+
+      await Geolocator.openAppSettings();
+      return;
+    }
+
+    final granted =
+        permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always;
+
+    setState(() {
+      _locationGranted = granted;
+    });
+
+    if (granted) {
+      _showMessage('Konum izni verildi.');
+    } else {
+      _showMessage('Konum izni verilmedi.');
+    }
+  } catch (e) {
+    _showMessage('Konum izni kontrol edilirken hata oluştu.');
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
+
 
   void _showMessage(String message) {
     if (!mounted) return;
