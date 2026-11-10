@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+
 
 import '../repositories/user_profile_repository.dart';
 
@@ -206,19 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
 
-                        const SizedBox(height: 28),
-
-                        SizedBox(
-                          height: 56,
-                          child: FilledButton.icon(
-                            onPressed: () => context.go('/walking'),
-                            icon: const Icon(Icons.play_arrow_rounded),
-                            label: const Text('Yürüyüşe Başla'),
-                            style: FilledButton.styleFrom(
-                              shape: const StadiumBorder(),
-                            ),
-                          ),
-                        ),
+                      
                       ],
                     ),
                   ),
