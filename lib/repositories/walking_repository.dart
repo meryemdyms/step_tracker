@@ -97,4 +97,10 @@ class WalkingRepository {
           ]))
         .get();
   }
+
+  Future<WalkingSession?> getWalkingById(int sessionId) {
+  return (_database.select(_database.walkingSessions)
+        ..where((t) => t.id.equals(sessionId)))
+      .getSingleOrNull();
+}
 }

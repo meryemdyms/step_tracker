@@ -65,7 +65,9 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
     if (!mounted) return;
 
     if (_controller.status == WalkingStatus.completed) {
-      context.go('/walking-summary');
+  context.go(
+  '/walking-summary/${_controller.sessionId}',
+);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

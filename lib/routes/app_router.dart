@@ -13,6 +13,7 @@ import '../screens/home_screen.dart';
 import '../screens/walking_screen.dart';
 import '../screens/walking_map_screen.dart';
 import '../repositories/walking_repository.dart';
+import '../screens/walking_summary_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
@@ -77,11 +78,19 @@ GoRoute(
     walkingRepository: walkingRepository,
   ),
 ),
-      GoRoute(
-        path: '/walking-summary',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Yürüyüş Özeti'),
-      ),
+   GoRoute(
+  path: '/walking-summary/:sessionId',
+  builder: (context, state) {
+    final sessionId = int.parse(
+      state.pathParameters['sessionId']!,
+    );
+
+    return WalkingSummaryScreen(
+      sessionId: sessionId,
+      repository: walkingRepository,
+    );
+  },
+),
       GoRoute(
         path: '/walking-detail',
         builder: (context, state) =>
