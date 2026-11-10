@@ -1,44 +1,69 @@
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _navigateToOnboarding();
+  }
+
+  Future<void> _navigateToOnboarding() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    context.go('/onboarding');
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Scaffold(
       body: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/app_logo.png',
-                  width: 120,
-                  height: 120,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Adım Takip',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Her adımını takip et.',
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
+          SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/app_logo.png',
+                    width: 160,
+                    height: 160,
+                    fit: BoxFit.contain,
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 24),
+
+                  Text(
+                    'Adım Takip',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colors.onSurface,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    'Her adımın bir başlangıç.',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -47,11 +72,10 @@ class SplashScreen extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: SizedBox(
-              height: 140,
+              height: 150,
               child: CustomPaint(
                 painter: _WavePainter(
-                  primaryColor: colorScheme.primary,
-                  secondaryColor: colorScheme.secondary,
+                  color: colors.primary.withValues(alpha: 0.18),
                 ),
               ),
             ),
@@ -63,58 +87,39 @@ class SplashScreen extends StatelessWidget {
 }
 
 class _WavePainter extends CustomPainter {
-  final Color primaryColor;
-  final Color secondaryColor;
+  final Color color;
 
-  _WavePainter({
-    required this.primaryColor,
-    required this.secondaryColor,
-  });
+  _WavePainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final bluePaint = Paint()
-      ..color = secondaryColor.withValues(alpha: 0.35);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
 
-    final bluePath = Path()
-      ..moveTo(0, size.height * 0.65)
-      ..cubicTo(
-        size.width * 0.30,
-        size.height * 0.10,
-        size.width * 0.60,
-        size.height * 0.85,
+    final path = Path()
+      ..moveTo(0, size.height * 0.4)
+      ..quadraticBezierTo(
+        size.width * 0.25,
+        size.height * 0.1,
+        size.width * 0.5,
+        size.height * 0.4,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.75,
+        size.height * 0.7,
         size.width,
-        size.height * 0.20,
+        size.height * 0.3,
       )
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
 
-    canvas.drawPath(bluePath, bluePaint);
-
-    final coralPaint = Paint()
-      ..color = primaryColor.withValues(alpha: 0.25);
-
-    final coralPath = Path()
-      ..moveTo(0, size.height * 0.40)
-      ..cubicTo(
-        size.width * 0.35,
-        size.height * 0.15,
-        size.width * 0.65,
-        size.height * 1.10,
-        size.width,
-        size.height * 0.65,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-
-    canvas.drawPath(coralPath, coralPaint);
+    canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(covariant _WavePainter oldDelegate) {
-    return oldDelegate.primaryColor != primaryColor ||
-        oldDelegate.secondaryColor != secondaryColor;
+    return oldDelegate.color != color;
   }
 }

@@ -1,46 +1,44 @@
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import 'core/theme/app_theme.dart';
-import 'screens/splash_screen.dart';
-import 'screens/onboarding_screen.dart';
+import 'database/app_database.dart';
+import 'routes/app_router.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Adım Takip',
-      debugShowCheckedModeBanner: false,
-
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-
-      home: const OnboardingScreen(),
-    );
-  }
+  State<MyApp> createState() => _MyAppState();
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class _MyAppState extends State<MyApp> {
+  final AppDatabase _database = AppDatabase();
+
+  late final GoRouter _router = createAppRouter(_database);
+
+  @override
+  void dispose() {
+    _router.dispose();
+    _database.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Adım Takip'),
-      ),
-      body: Center(
-        child: Text(
-          'Adım Takip Uygulaması',
-          style: Theme.of(context).textTheme.headlineSmall, //Theme.of(context) ile widget'ın bulunduğu BuildContext üzerinden aktif temaya erişiyoruz. 
-        ),
-      ),
+    return MaterialApp.router(
+      title: 'Adım Takip',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      routerConfig: _router,
     );
   }
 }
