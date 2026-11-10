@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,6 +8,7 @@ import '../screens/main_shell.dart';
 import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/user_info_screen.dart';
+import '../screens/permissions_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
@@ -26,14 +26,12 @@ GoRouter createAppRouter(AppDatabase database) {
       ),
       GoRoute(
         path: '/user-info',
-        builder: (context, state) => UserInfoScreen(
-          repository: profileRepository,
-        ),
+        builder: (context, state) =>
+            UserInfoScreen(repository: profileRepository),
       ),
       GoRoute(
         path: '/permissions',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'İzinler'),
+        builder: (context, state) => const PermissionsScreen(),
       ),
 
       ShellRoute(
@@ -102,9 +100,7 @@ class _PlaceholderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text('$title ekranı hazırlanacak'),
-      ),
+      body: Center(child: Text('$title ekranı hazırlanacak')),
     );
   }
 }

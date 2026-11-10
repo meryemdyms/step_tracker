@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import '../repositories/user_profile_repository.dart';
-
+import 'package:go_router/go_router.dart';
 class UserInfoScreen extends StatefulWidget {
   final UserProfileRepository repository;
 
@@ -93,49 +93,44 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
     return null;
   }
 
-  Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+Future<void> _saveProfile() async {
+  if (!_formKey.currentState!.validate()) return;
 
-    FocusScope.of(context).unfocus();
+  FocusScope.of(context).unfocus();
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      await widget.repository.saveProfile(
-        heightCm: double.parse(
-          _heightController.text.trim().replaceAll(',', '.'),
-        ),
-        weightKg: double.parse(
-          _weightController.text.trim().replaceAll(',', '.'),
-        ),
-        dailyStepGoal: int.parse(
-          _stepGoalController.text.trim(),
-        ),
-      );
+  try {
+    await widget.repository.saveProfile(
+      heightCm: double.parse(
+        _heightController.text.trim().replaceAll(',', '.'),
+      ),
+      weightKg: double.parse(
+        _weightController.text.trim().replaceAll(',', '.'),
+      ),
+      dailyStepGoal: int.parse(
+        _stepGoalController.text.trim(),
+      ),
+    );
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bilgileriniz başarıyla kaydedildi.'),
-        ),
-      );
+    context.go('/permissions');
 
-      // Routing aşamasında PermissionsScreen'e geçilecek.
-    } catch (e) {
-      if (!mounted) return;
+  } catch (e) {
+    if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bilgiler kaydedilemedi.'),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Bilgiler kaydedilemedi.'),
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
 
   @override
   void dispose() {
