@@ -20,6 +20,8 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   late Future<List<WalkingSession>> _walksFuture;
 
+  static const Color _blue = Color(0xFF65A7C1);
+
   @override
   void initState() {
     super.initState();
@@ -44,18 +46,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       'Eylül', 'Ekim', 'Kasım', 'Aralık',
     ];
 
-    return '${localDate.day} '
-        '${months[localDate.month - 1]} '
-        '${localDate.year}';
-  }
-
-  String _formatTime(DateTime date) {
-    final localDate = date.toLocal();
-
-    final hour = localDate.hour.toString().padLeft(2, '0');
-    final minute = localDate.minute.toString().padLeft(2, '0');
-
-    return '$hour:$minute';
+    return '${localDate.day} ${months[localDate.month - 1]}';
   }
 
   String _formatDuration(int seconds) {
@@ -66,97 +57,87 @@ class _HistoryScreenState extends State<HistoryScreen> {
       return '$hours sa $minutes dk';
     }
 
-    if (minutes == 0) {
-      return '$seconds sn';
+    if (minutes > 0) {
+      return '$minutes dk';
     }
 
-    return '$minutes dk';
+    return '$seconds sn';
   }
 
   Widget _buildWalkingCard(WalkingSession walk) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    final distanceKm =
-        (walk.distanceMeters / 1000).toStringAsFixed(2);
+    final distanceKm = (walk.distanceMeters / 1000)
+        .toStringAsFixed(2)
+        .replaceAll('.', ',');
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          context.push('/walking-summary/${walk.id}');
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: colors.secondaryContainer,
-                    child: Icon(
-                      Icons.directions_walk,
-                      color: colors.onSecondaryContainer,
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _formatDate(walk.startedAt),
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _formatTime(walk.startedAt),
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const Icon(Icons.chevron_right),
-                ],
-              ),
-
-              const Divider(height: 28),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: isDark ? colors.surface : Colors.white,
+        borderRadius: BorderRadius.circular(17),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF7894A5)
+                      .withValues(alpha: 0.07),
+                  blurRadius: 13,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(17),
+          onTap: () {
+            context.push('/walking-summary/${walk.id}');
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 15,
+              vertical: 16,
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.calendar_month_outlined,
+                  color: _blue,
+                  size: 27,
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.route_outlined,
-                        color: colors.primary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 6),
-                      Text('$distanceKm km'),
-                    ],
-                  ),
-
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.timer_outlined,
-                        color: colors.secondary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 6),
                       Text(
-                        _formatDuration(walk.durationSeconds),
+                        _formatDate(walk.startedAt),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Yürüyüş • $distanceKm km • '
+                        '${_formatDuration(walk.durationSeconds)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 24,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -171,28 +152,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Aktivite kayıtların',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
               Text(
                 'Yürüyüş Geçmişi',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 24),
-
               Expanded(
                 child: FutureBuilder<List<WalkingSession>>(
                   future: _walksFuture,
@@ -230,14 +200,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.history,
-                              size: 64,
-                              color: colors.primary,
+                              Icons.directions_walk_rounded,
+                              size: 60,
+                              color: colors.secondary,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
+                            const SizedBox(height: 14),
+                            Text(
                               'Henüz tamamlanmış yürüyüşün yok.',
                               textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium,
                             ),
                           ],
                         ),
@@ -249,6 +220,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       child: ListView.builder(
                         physics:
                             const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 24),
                         itemCount: walks.length,
                         itemBuilder: (context, index) {
                           return _buildWalkingCard(walks[index]);

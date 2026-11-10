@@ -1,6 +1,8 @@
 
-import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../repositories/user_profile_repository.dart';
 
@@ -18,10 +20,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _dailyStepGoal = 10000;
+
+  // Sensör bağlantısı henüz yapılmadı.
   final int _todaySteps = 0;
+  final double _distanceKm = 0;
+  final int _calories = 0;
 
   bool _isLoading = true;
   String? _errorMessage;
+
+  static const _coral = Color(0xFFEE846F);
+  static const _blue = Color(0xFF65A7C1);
 
   @override
   void initState() {
@@ -37,9 +46,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _dailyStepGoal = profile?.dailyStepGoal ?? 10000;
+        _errorMessage = null;
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
 
       setState(() {
@@ -49,214 +59,447 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  String _formatNumber(int number) {
+    return number.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+  }
+
+  String _todayText() {
+    final today = DateTime.now();
+
+    const months = [
+      'Ocak', 'Şubat', 'Mart', 'Nisan',
+      'Mayıs', 'Haziran', 'Temmuz', 'Ağustos',
+      'Eylül', 'Ekim', 'Kasım', 'Aralık',
+    ];
+
+    const weekdays = [
+      'Pazartesi', 'Salı', 'Çarşamba',
+      'Perşembe', 'Cuma', 'Cumartesi', 'Pazar',
+    ];
+
+    return '${today.day} ${months[today.month - 1]} '
+        '${weekdays[today.weekday - 1]}';
+  }
+
+  Widget _buildHeader() {
+    final theme = Theme.of(context);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bugün',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _todayText(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+
+        IconButton(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Bildirimler henüz hazırlanmadı.',
+                ),
+              ),
+            );
+          },
+          icon: const Icon(
+            Icons.notifications_none_rounded,
+            size: 27,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepChart() {
+    // Gerçek saatlik adım verisi gelene kadar
+    // yalnızca dekoratif bir grafik yer tutucusu.
+    const heights = [
+      0.12, 0.18, 0.16, 0.25,
+      0.34, 0.22, 0.55, 0.29,
+      0.41, 0.61, 0.35, 0.73,
+    ];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: heights.map((height) {
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: FractionallySizedBox(
+              heightFactor: height,
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.50),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildStepsCard(double height) {
+    return Container(
+      height: height,
+      padding: const EdgeInsets.fromLTRB(19, 18, 19, 17),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFF39581),
+            Color(0xFFEE846F),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(21),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text(
+                'Adımlar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Icon(
+                Icons.directions_walk_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 9),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                _formatNumber(_todaySteps),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  '/ ${_formatNumber(_dailyStepGoal)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          Expanded(
+            child: _buildStepChart(),
+          ),
+
+          // Grafikteki çubuklar gerçek adım verisi değil.
+          const SizedBox(height: 4),
+          Text(
+            'Saatlik grafik önizlemesi',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.75),
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required double height,
+    required IconData icon,
+    required String label,
+    required String value,
+    required String unit,
+    required Color iconColor,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      height: height,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? theme.colorScheme.surface
+            : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.045),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 25, color: iconColor),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: value,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' $unit',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStart(double buttonHeight) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Hızlı Başlat',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        Material(
+          color: isDark
+              ? theme.colorScheme.surface
+              : Colors.white,
+          borderRadius: BorderRadius.circular(19),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(19),
+            onTap: () => context.push('/walking-map'),
+            child: Container(
+              height: buttonHeight,
+              padding: const EdgeInsets.symmetric(horizontal: 17),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(19),
+                border: Border.all(
+                  color: _blue.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor:
+                        _coral.withValues(alpha: 0.10),
+                    child: const Icon(
+                      Icons.directions_walk_rounded,
+                      color: _coral,
+                      size: 29,
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Text(
+                      'Yürüyüşe Başla',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 37),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-
-    final progress = _dailyStepGoal > 0
-        ? (_todaySteps / _dailyStepGoal).clamp(0.0, 1.0)
-        : 0.0;
-
-    final progressPercent = (progress * 100).round();
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark
+          ? theme.scaffoldBackgroundColor
+          : const Color(0xFFF7FAFC),
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
                 ? Center(child: Text(_errorMessage!))
-                : RefreshIndicator(
-                    onRefresh: _loadProfile,
-                    child: ListView(
-                      padding: const EdgeInsets.all(24),
-                      children: [
-                        Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final availableHeight = constraints.maxHeight;
+
+                      // Kompakt ekranlarda referans ölçüler.
+                      // Uzun ekranlarda her bileşen kendi oranında büyür.
+                      final extra =
+                          math.max(0.0, availableHeight - 560);
+
+                      final stepHeight =
+                          190.0 + math.min(extra * 0.38, 90.0);
+
+                      final infoHeight =
+                          105.0 + math.min(extra * 0.16, 35.0);
+
+                      final quickButtonHeight =
+                          74.0 + math.min(extra * 0.10, 18.0);
+
+                      final headerGap =
+                          22.0 + math.min(extra * 0.06, 12.0);
+
+                      final infoGap =
+                          15.0 + math.min(extra * 0.04, 8.0);
+
+                      final quickGap =
+                          27.0 + math.min(extra * 0.16, 35.0);
+
+                      return RefreshIndicator(
+                        onRefresh: _loadProfile,
+                        child: SingleChildScrollView(
+                          physics:
+                              const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(
+                            20, 18, 20, 22,
+                          ),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: math.max(
+                                0,
+                                availableHeight - 40,
+                              ),
+                            ),
+                            child: Column(
                               crossAxisAlignment:
                                   CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Bugünkü aktiviten',
-                                  style: theme.textTheme.bodyMedium
-                                      ?.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Adım Takip',
-                                  style: theme.textTheme.headlineSmall
-                                      ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            CircleAvatar(
-                              radius: 26,
-                              backgroundColor:
-                                  colors.primaryContainer,
-                              child: Icon(
-                                Icons.directions_walk_rounded,
-                                color: colors.primary,
-                                size: 30,
-                              ),
-                            ),
-                          ],
-                        ),
+                                _buildHeader(),
 
-                        const SizedBox(height: 28),
+                                SizedBox(height: headerGap),
 
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  height: 220,
-                                  width: 220,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      SizedBox(
-                                        height: 190,
-                                        width: 190,
-                                        child: CircularProgressIndicator(
-                                          value: progress,
-                                          strokeWidth: 14,
-                                          strokeCap: StrokeCap.round,
-                                          backgroundColor:
-                                              colors.surfaceContainerHighest,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            colors.primary,
-                                          ),
-                                        ),
+                                _buildStepsCard(stepHeight),
+
+                                SizedBox(height: infoGap),
+
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildInfoCard(
+                                        height: infoHeight,
+                                        icon: Icons
+                                            .local_fire_department_rounded,
+                                        label: 'Kalori',
+                                        value: '$_calories',
+                                        unit: 'kcal',
+                                        iconColor: _coral,
                                       ),
-
-                                      Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Bugünkü adımlar',
-                                            style: theme.textTheme.bodyMedium,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            '$_todaySteps',
-                                            style: theme.textTheme
-                                                .headlineLarge
-                                                ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '/ $_dailyStepGoal',
-                                            style: theme.textTheme.bodyMedium
-                                                ?.copyWith(
-                                              color:
-                                                  colors.onSurfaceVariant,
-                                            ),
-                                          ),
-                                        ],
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildInfoCard(
+                                        height: infoHeight,
+                                        icon: Icons.location_on_rounded,
+                                        label: 'Mesafe',
+                                        value: _distanceKm
+                                            .toStringAsFixed(1)
+                                            .replaceAll('.', ','),
+                                        unit: 'km',
+                                        iconColor: _blue,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
 
-                                const SizedBox(height: 12),
+                                SizedBox(height: quickGap),
 
-                                Text(
-                                  'Günlük hedefin %$progressPercent'
-                                  ' tamamlandı',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
+                                _buildQuickStart(quickButtonHeight),
                               ],
                             ),
                           ),
                         ),
-
-                        const SizedBox(height: 16),
-
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _InfoCard(
-                                icon: Icons.route_rounded,
-                                title: '0,0 km',
-                                subtitle: 'Tahmini mesafe',
-                                color: colors.secondary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _InfoCard(
-                                icon: Icons.local_fire_department_outlined,
-                                title: '0 kcal',
-                                subtitle: 'Tahmini kalori',
-                                color: colors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                      
-                      ],
-                    ),
+                      );
+                    },
                   ),
-      ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-
-  const _InfoCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 28),
-
-            const SizedBox(height: 16),
-
-            Text(
-              title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 4),
-
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 
 import '../repositories/walking_repository.dart';
 
-enum StatisticsPeriod { daily, weekly, monthly }
+enum StatisticsPeriod {
+  daily,
+  weekly,
+  monthly,
+}
 
 class StatisticsScreen extends StatefulWidget {
   final WalkingRepository repository;
@@ -22,13 +26,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   StatisticsPeriod _period = StatisticsPeriod.weekly;
   DateTime _selectedDate = DateTime.now();
 
-  // Yalnızca tasarımı önizlemek için örnek veriler.
+  static const Color _coral = Color(0xFFEE846F);
+  static const Color _blue = Color(0xFF65A7C1);
+
+  // Yalnızca tasarım önizlemesi.
   // Sensör entegrasyonunda gerçek verilerle değiştirilecek.
-  static const _weeklyDemoSteps = [
+  static const List<int> _weeklyDemoSteps = [
     5200, 7200, 6100, 8500, 7400, 8700, 9210,
   ];
 
-  static const _weekLabels = [
+  static const List<String> _weekLabels = [
     'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz',
   ];
 
@@ -44,34 +51,50 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
+  String _monthName(int month) {
+    const months = [
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
+    ];
+
+    return months[month - 1];
+  }
+
   String _dateLabel() {
     switch (_period) {
       case StatisticsPeriod.daily:
-        return '${_selectedDate.day}.'
-            '${_selectedDate.month}.'
+        return '${_selectedDate.day} '
+            '${_monthName(_selectedDate.month)} '
             '${_selectedDate.year}';
 
       case StatisticsPeriod.weekly:
         final end = _weekStart.add(
           const Duration(days: 6),
         );
-        return '${_weekStart.day} – ${end.day} '
-            '${_monthName(end.month)}';
+
+        if (_weekStart.month == end.month) {
+          return '${_weekStart.day} – ${end.day} '
+              '${_monthName(end.month)}';
+        }
+
+        return '${_weekStart.day} '
+            '${_monthName(_weekStart.month)} – '
+            '${end.day} ${_monthName(end.month)}';
 
       case StatisticsPeriod.monthly:
         return '${_monthName(_selectedDate.month)} '
             '${_selectedDate.year}';
     }
-  }
-
-  String _monthName(int month) {
-    const months = [
-      'Ocak', 'Şubat', 'Mart', 'Nisan',
-      'Mayıs', 'Haziran', 'Temmuz', 'Ağustos',
-      'Eylül', 'Ekim', 'Kasım', 'Aralık',
-    ];
-
-    return months[month - 1];
   }
 
   void _changeDate(int direction) {
@@ -128,14 +151,109 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   String _formatNumber(num number) {
     final text = number.toStringAsFixed(0);
+
     return text.replaceAllMapped(
       RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => '.',
+      (_) => '.',
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    return Container(
+      height: 43,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF1F5),
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Row(
+        children: [
+          _periodButton(
+            'Günlük',
+            StatisticsPeriod.daily,
+          ),
+          _periodButton(
+            'Haftalık',
+            StatisticsPeriod.weekly,
+          ),
+          _periodButton(
+            'Aylık',
+            StatisticsPeriod.monthly,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _periodButton(
+    String title,
+    StatisticsPeriod value,
+  ) {
+    final selected = _period == value;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _period = value;
+            _selectedDate = DateTime.now();
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? _blue : Colors.transparent,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: selected
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+              color: selected
+                  ? Colors.white
+                  : const Color(0xFF273640),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateSelector() {
+    final theme = Theme.of(context);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          onPressed: () => _changeDate(-1),
+          icon: const Icon(
+            Icons.chevron_left,
+            size: 25,
+          ),
+        ),
+        Text(
+          _dateLabel(),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        IconButton(
+          onPressed: () => _changeDate(1),
+          icon: const Icon(
+            Icons.chevron_right,
+            size: 25,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildBarChart() {
-    final colors = Theme.of(context).colorScheme;
     final steps = _demoSteps;
     final labels = _chartLabels;
 
@@ -144,7 +262,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
 
     return SizedBox(
-      height: 190,
+      height: 185,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: List.generate(steps.length, (index) {
@@ -154,30 +272,44 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
           return Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: FractionallySizedBox(
-                      heightFactor: fraction == 0
-                          ? 0.01
-                          : fraction,
-                      child: Container(
-                        width: 22,
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius:
-                              BorderRadius.circular(7),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final barHeight =
+                          constraints.maxHeight * fraction;
+
+                      return Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          width: 19,
+                          height: barHeight,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0xFFF59883),
+                                _coral,
+                              ],
+                            ),
+                            borderRadius:
+                                BorderRadius.circular(6),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   labels[index],
-                  style: Theme.of(context).textTheme.labelSmall,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelSmall
+                      ?.copyWith(
+                        fontSize: 11,
+                      ),
                 ),
               ],
             ),
@@ -189,42 +321,63 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   Widget _summaryCard({
     required IconData icon,
-    required String title,
+    required String label,
     required String value,
     required Color iconColor,
   }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Expanded(
-      child: Card(
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 6,
-            vertical: 18,
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: iconColor, size: 28),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                maxLines: 1,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.labelSmall,
-              ),
-              const SizedBox(height: 8),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  value,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+      child: Container(
+        height: 113,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 5,
+          vertical: 12,
+        ),
+        decoration: BoxDecoration(
+          color: isDark
+              ? theme.colorScheme.surface
+              : Colors.white,
+          borderRadius: BorderRadius.circular(17),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: const Color(0xFF7996A6)
+                        .withValues(alpha: 0.08),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
                   ),
+                ],
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: iconColor,
+              size: 27,
+            ),
+            const SizedBox(height: 9),
+            Text(
+              label,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 10,
+              ),
+            ),
+            const Spacer(),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -235,135 +388,121 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final totalSteps = _demoSteps.fold<int>(
+    final steps = _demoSteps;
+
+    final totalSteps = steps.fold<int>(
       0,
-      (total, steps) => total + steps,
+      (sum, value) => sum + value,
     );
 
-    final averageSteps = totalSteps ~/ _demoSteps.length;
+    final averageSteps = steps.isEmpty
+        ? 0
+        : totalSteps ~/ steps.length;
 
     return Scaffold(
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              'İstatistikler',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                20, 20, 20, 24,
               ),
-            ),
-
-            const SizedBox(height: 24),
-
-            SegmentedButton<StatisticsPeriod>(
-              showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(
-                  value: StatisticsPeriod.daily,
-                  label: Text('Günlük'),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 44,
                 ),
-                ButtonSegment(
-                  value: StatisticsPeriod.weekly,
-                  label: Text('Haftalık'),
-                ),
-                ButtonSegment(
-                  value: StatisticsPeriod.monthly,
-                  label: Text('Aylık'),
-                ),
-              ],
-              selected: {_period},
-              onSelectionChanged: (selection) {
-                setState(() {
-                  _period = selection.first;
-                  _selectedDate = DateTime.now();
-                });
-              },
-            ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'İstatistikler',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
 
-            const SizedBox(height: 24),
+                    _buildPeriodSelector(),
+                    const SizedBox(height: 10),
 
-            Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () => _changeDate(-1),
-                  icon: const Icon(Icons.chevron_left),
-                ),
-                Text(
-                  _dateLabel(),
-                  style: theme.textTheme.titleMedium,
-                ),
-                IconButton(
-                  onPressed: () => _changeDate(1),
-                  icon: const Icon(Icons.chevron_right),
-                ),
-              ],
-            ),
+                    _buildDateSelector(),
+                    const SizedBox(height: 5),
 
-            const Divider(height: 32),
+                    Divider(
+                      color: colors.outlineVariant,
+                    ),
+                    const SizedBox(height: 15),
 
-            Text(
-              _formatNumber(totalSteps),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+                    Text(
+                      _formatNumber(totalSteps),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 34,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+
+                    Text(
+                      'Toplam Adım',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+
+                    Divider(
+                      color: colors.outlineVariant,
+                    ),
+                    const SizedBox(height: 10),
+
+                    _buildBarChart(),
+                    const SizedBox(height: 24),
+
+                    Row(
+                      children: [
+                        _summaryCard(
+                          icon: Icons.directions_walk_rounded,
+                          label: 'Ort. Adım',
+                          value: _formatNumber(averageSteps),
+                          iconColor: _coral,
+                        ),
+                        const SizedBox(width: 9),
+                        _summaryCard(
+                          icon:
+                              Icons.local_fire_department_rounded,
+                          label: 'Toplam Kalori',
+                          value: '—',
+                          iconColor: _coral,
+                        ),
+                        const SizedBox(width: 9),
+                        _summaryCard(
+                          icon: Icons.location_on_rounded,
+                          label: 'Toplam Mesafe',
+                          value: '—',
+                          iconColor: _blue,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Text(
+                      'Örnek adım verileri gösteriliyor. '
+                      'Gerçek sensör bağlantısı henüz yapılmadı.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 4),
-
-            Text(
-              'Toplam Adım',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-
-            const SizedBox(height: 28),
-
-            _buildBarChart(),
-
-            const SizedBox(height: 28),
-
-            Row(
-              children: [
-                _summaryCard(
-                  icon: Icons.directions_walk,
-                  title: 'Ort. Adım',
-                  value: _formatNumber(averageSteps),
-                  iconColor: colors.primary,
-                ),
-                const SizedBox(width: 8),
-                _summaryCard(
-                  icon: Icons.local_fire_department,
-                  title: 'Toplam Kalori',
-                  value: '—',
-                  iconColor: colors.primary,
-                ),
-                const SizedBox(width: 8),
-                _summaryCard(
-                  icon: Icons.location_on,
-                  title: 'Toplam Mesafe',
-                  value: '—',
-                  iconColor: colors.secondary,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            Text(
-              'Örnek adım verileri gösteriliyor. '
-              'Gerçek sensör bağlantısı henüz yapılmadı.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

@@ -22,12 +22,14 @@ class WalkingSummaryScreen extends StatefulWidget {
       _WalkingSummaryScreenState();
 }
 
-class _WalkingSummaryScreenState
-    extends State<WalkingSummaryScreen> {
+class _WalkingSummaryScreenState extends State<WalkingSummaryScreen> {
   late final Future<({
     WalkingSession? session,
     List<RoutePoint> points,
   })> _summaryFuture;
+
+  static const Color _coral = Color(0xFFEE846F);
+  static const Color _blue = Color(0xFF65A7C1);
 
   @override
   void initState() {
@@ -52,54 +54,114 @@ class _WalkingSummaryScreenState
     return (session: session, points: points);
   }
 
+  String _twoDigits(int value) {
+    return value.toString().padLeft(2, '0');
+  }
+
   String _formatDuration(int seconds) {
     final hours = seconds ~/ 3600;
     final minutes = (seconds % 3600) ~/ 60;
     final remaining = seconds % 60;
 
-    String twoDigits(int value) =>
-        value.toString().padLeft(2, '0');
-
-    if (hours > 0) {
-      return '${twoDigits(hours)}:'
-          '${twoDigits(minutes)}:'
-          '${twoDigits(remaining)}';
-    }
-
-    return '${twoDigits(minutes)}:${twoDigits(remaining)}';
+    return '${_twoDigits(hours)}:'
+        '${_twoDigits(minutes)}:'
+        '${_twoDigits(remaining)}';
   }
 
-  Widget _buildRouteMap(List<RoutePoint> routePoints) {
-    final colors = Theme.of(context).colorScheme;
+  String _formatNumber(int value) {
+    return value.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+  }
 
-    if (routePoints.isEmpty) {
+  String _formatDate(DateTime date) {
+    final local = date.toLocal();
+
+    const months = [
+      'Ocak', 'Şubat', 'Mart', 'Nisan',
+      'Mayıs', 'Haziran', 'Temmuz', 'Ağustos',
+      'Eylül', 'Ekim', 'Kasım', 'Aralık',
+    ];
+
+    return '${local.day} ${months[local.month - 1]}';
+  }
+
+  String _formatTime(DateTime date) {
+    final local = date.toLocal();
+
+    return '${_twoDigits(local.hour)}:'
+        '${_twoDigits(local.minute)}';
+  }
+
+  String _dateRange(WalkingSession session) {
+    final start = session.startedAt;
+    final end = session.endedAt;
+
+    if (end == null) {
+      return '${_formatDate(start)} · ${_formatTime(start)}';
+    }
+
+    return '${_formatDate(start)} · '
+        '${_formatTime(start)} – ${_formatTime(end)}';
+  }
+
+  String _averageSpeed(WalkingSession session) {
+    if (session.durationSeconds <= 0 ||
+        session.distanceMeters <= 0) {
+      return '—';
+    }
+
+    final kilometers = session.distanceMeters / 1000;
+    final hours = session.durationSeconds / 3600;
+    final speed = kilometers / hours;
+
+    return '${speed.toStringAsFixed(1).replaceAll('.', ',')} km/sa';
+  }
+
+  Widget _buildRouteMap(List<RoutePoint> points) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    if (points.isEmpty) {
       return Container(
-        height: 210,
+        height: 185,
         decoration: BoxDecoration(
-          color: colors.secondaryContainer,
-          borderRadius: BorderRadius.circular(20),
+          color: isDark
+              ? colors.surfaceContainerHigh
+              : const Color(0xFFEAF3F8),
+          borderRadius: BorderRadius.circular(19),
         ),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.map_outlined, size: 48),
-              SizedBox(height: 12),
-              Text('Bu yürüyüş için GPS rotası kaydedilmedi.'),
-            ],
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.map_outlined,
+              size: 42,
+              color: _blue,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Bu yürüyüş için GPS rotası kaydedilmedi.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    final coordinates = routePoints
+    final coordinates = points
         .map((point) => LatLng(point.latitude, point.longitude))
         .toList();
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(19),
       child: SizedBox(
-        height: 240,
+        height: 185,
         child: FlutterMap(
           options: MapOptions(
             initialCenter: coordinates.first,
@@ -107,7 +169,7 @@ class _WalkingSummaryScreenState
             initialCameraFit: coordinates.length > 1
                 ? CameraFit.bounds(
                     bounds: LatLngBounds.fromPoints(coordinates),
-                    padding: const EdgeInsets.all(40),
+                    padding: const EdgeInsets.all(28),
                   )
                 : null,
           ),
@@ -122,8 +184,8 @@ class _WalkingSummaryScreenState
                 polylines: [
                   Polyline(
                     points: coordinates,
-                    color: colors.primary,
-                    strokeWidth: 5,
+                    color: _coral,
+                    strokeWidth: 4,
                   ),
                 ],
               ),
@@ -131,24 +193,25 @@ class _WalkingSummaryScreenState
               markers: [
                 Marker(
                   point: coordinates.first,
-                  width: 40,
-                  height: 40,
+                  width: 34,
+                  height: 34,
                   child: const Icon(
-                    Icons.trip_origin,
-                    color: Colors.green,
-                    size: 30,
+                    Icons.trip_origin_rounded,
+                    size: 23,
+                    color: _coral,
                   ),
                 ),
-                Marker(
-                  point: coordinates.last,
-                  width: 40,
-                  height: 40,
-                  child: Icon(
-                    Icons.location_on,
-                    color: colors.primary,
-                    size: 38,
+                if (coordinates.length > 1)
+                  Marker(
+                    point: coordinates.last,
+                    width: 34,
+                    height: 34,
+                    child: const Icon(
+                      Icons.location_on_rounded,
+                      size: 30,
+                      color: _coral,
+                    ),
                   ),
-                ),
               ],
             ),
             const SimpleAttributionWidget(
@@ -164,31 +227,67 @@ class _WalkingSummaryScreenState
     required IconData icon,
     required String value,
     required String label,
+    required Color iconColor,
   }) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            Icon(icon, size: 28, color: colors.primary),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+    return Container(
+      constraints: const BoxConstraints(minHeight: 74),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 11,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? colors.surface : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF7894A5)
+                      .withValues(alpha: 0.08),
+                  blurRadius: 13,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: iconColor,
+            size: 25,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -200,86 +299,120 @@ class _WalkingSummaryScreenState
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final distanceKm =
-        (session.distanceMeters / 1000).toStringAsFixed(2);
+    final distanceKm = (session.distanceMeters / 1000)
+        .toStringAsFixed(2)
+        .replaceAll('.', ',');
 
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return Column(
       children: [
-        Icon(
-          Icons.check_circle_rounded,
-          size: 76,
-          color: colors.primary,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Yürüyüş Tamamlandı!',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            children: [
+              Text(
+                _dateRange(session),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildRouteMap(points),
+
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _summaryCard(
+                      icon: Icons.location_on_outlined,
+                      value: '$distanceKm km',
+                      label: 'Mesafe',
+                      iconColor: _blue,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _summaryCard(
+                      icon: Icons.timer_outlined,
+                      value: _formatDuration(
+                        session.durationSeconds,
+                      ),
+                      label: 'Süre',
+                      iconColor: _blue,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _summaryCard(
+                      icon: Icons.directions_walk_rounded,
+                      value: session.stepCount == null
+                          ? '—'
+                          : _formatNumber(session.stepCount!),
+                      label: 'Adım',
+                      iconColor: _coral,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _summaryCard(
+                      icon:
+                          Icons.local_fire_department_rounded,
+                      value: '—',
+                      label: 'Kalori',
+                      iconColor: _coral,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _summaryCard(
+                      icon: Icons.speed_rounded,
+                      value: _averageSpeed(session),
+                      label: 'Ort. Hız',
+                      iconColor: _blue,
+                    ),
+                  ),
+                  const Expanded(child: SizedBox()),
+                ],
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Yürüyüşünün özeti',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colors.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 28),
 
-        _buildRouteMap(points),
-
-        const SizedBox(height: 24),
-
-        Row(
-          children: [
-            Expanded(
-              child: _summaryCard(
-                icon: Icons.timer_outlined,
-                value: _formatDuration(session.durationSeconds),
-                label: 'Süre',
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
+          child: SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: FilledButton(
+              onPressed: () => context.go('/home'),
+              style: FilledButton.styleFrom(
+                backgroundColor: _coral,
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+              ),
+              child: const Text(
+                'Kaydet',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _summaryCard(
-                icon: Icons.route_outlined,
-                value: '$distanceKm km',
-                label: 'Mesafe',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _summaryCard(
-                icon: Icons.directions_walk,
-                value: session.stepCount?.toString() ?? '—',
-                label: 'Adım',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _summaryCard(
-                icon: Icons.local_fire_department_outlined,
-                value: '—',
-                label: 'Kalori',
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 30),
-
-        SizedBox(
-          height: 54,
-          child: FilledButton(
-            onPressed: () => context.go('/home'),
-            child: const Text('Ana Sayfaya Dön'),
           ),
         ),
       ],
@@ -288,37 +421,70 @@ class _WalkingSummaryScreenState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: SafeArea(
-        child: FutureBuilder(
-          future: _summaryFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.go('/home'),
+                    icon: const Icon(
+                      Icons.chevron_left_rounded,
+                      size: 28,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Yürüyüş Özeti',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
 
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  'Yürüyüş bilgileri yüklenemedi: ${snapshot.error}',
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
+            Expanded(
+              child: FutureBuilder(
+                future: _summaryFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState !=
+                      ConnectionState.done) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
 
-            final data = snapshot.data;
-            final session = data?.session;
+                  if (snapshot.hasError) {
+                    return const Center(
+                      child: Text(
+                        'Yürüyüş bilgileri yüklenemedi.',
+                      ),
+                    );
+                  }
 
-            if (session == null) {
-              return const Center(
-                child: Text('Yürüyüş kaydı bulunamadı.'),
-              );
-            }
+                  final data = snapshot.data;
+                  final session = data?.session;
 
-            return _buildSummary(session, data!.points);
-          },
+                  if (session == null) {
+                    return const Center(
+                      child: Text('Yürüyüş kaydı bulunamadı.'),
+                    );
+                  }
+
+                  return _buildSummary(session, data!.points);
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
