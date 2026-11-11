@@ -203,11 +203,9 @@ Card(
                     icon: Icons.brightness_6_outlined,
                     title: 'Tema',
                     subtitle: 'Sistem ayarı',
-                    onTap: () {
-                      _showMessage(
-                        'Tema tercihi ekranı henüz hazırlanmadı.',
-                      );
-                    },
+                  onTap: () {
+  context.push('/theme-settings');
+},
                   ),
                 ],
               ),

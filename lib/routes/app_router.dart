@@ -19,6 +19,7 @@ import '../screens/profile_screen.dart';
 import '../screens/walking_map_screen.dart';
 import '../screens/walking_summary_screen.dart';
 import '../screens/step_goal_screen.dart';
+import '../screens/theme_settings_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
@@ -147,6 +148,12 @@ GoRouter createAppRouter(AppDatabase database) {
   builder: (context, state) => StepGoalScreen(
     repository: profileRepository,
   ),
+),
+
+GoRoute(
+  path: '/theme-settings',
+  builder: (context, state) =>
+      const ThemeSettingsScreen(),
 ),
     ],
   );

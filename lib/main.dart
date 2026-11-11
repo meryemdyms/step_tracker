@@ -5,9 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
 import 'database/app_database.dart';
 import 'routes/app_router.dart';
+import 'services/theme_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Uygulama açılmadan önce kayıtlı tema tercihini yükle.
+  try {
+    await themeService.loadTheme();
+  } catch (e) {
+    debugPrint('Tema tercihi yüklenemedi: $e');
+  }
+
   runApp(const MyApp());
 }
 
@@ -32,13 +41,22 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Adım Takip',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      routerConfig: _router,
+    return ListenableBuilder(
+      listenable: themeService,
+      builder: (context, child) {
+        return MaterialApp.router(
+          title: 'Adım Takip',
+          debugShowCheckedModeBanner: false,
+
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+
+          // Artık sabit değil; kullanıcı tercihiyle değişir.
+          themeMode: themeService.themeMode,
+
+          routerConfig: _router,
+        );
+      },
     );
   }
 }
