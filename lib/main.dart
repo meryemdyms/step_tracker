@@ -45,7 +45,7 @@ class _MyAppState extends State<MyApp> {
       listenable: themeService,
       builder: (context, child) {
         return MaterialApp.router(
-          title: 'Adım Takip',
+          title: 'StepPulse',
           debugShowCheckedModeBanner: false,
 
           theme: AppTheme.lightTheme,

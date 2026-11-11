@@ -102,12 +102,14 @@ class _SplashScreenState extends State<SplashScreen> {
                   const SizedBox(height: 24),
 
                   Text(
-                    'Adım Takip',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colors.onSurface,
-                    ),
-                  ),
+  'StepPulse',
+  style: TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 1.5,
+    color: Colors.black,
+  ),
+),
 
                   const SizedBox(height: 12),
 
