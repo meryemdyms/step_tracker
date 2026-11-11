@@ -144,11 +144,14 @@ Card(
                     title: 'Kişisel Bilgiler',
                     subtitle: 'Boy, kilo ve diğer bilgiler',
                     onTap: () async {
-                      await context.push('/user-info');
-                      if (mounted) {
-                        _loadProfile();
-                      }
-                    },
+  final updated = await context.push<bool>('/edit-profile');
+
+  if (!mounted) return;
+
+  if (updated == true) {
+    await _loadProfile();
+  }
+},
                   ),
 
                   const Divider(height: 1, indent: 16, endIndent: 16),

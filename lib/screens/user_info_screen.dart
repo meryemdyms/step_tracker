@@ -1,13 +1,17 @@
 
 import 'package:flutter/material.dart';
-import '../repositories/user_profile_repository.dart';
 import 'package:go_router/go_router.dart';
+
+import '../repositories/user_profile_repository.dart';
+
 class UserInfoScreen extends StatefulWidget {
   final UserProfileRepository repository;
+  final bool isEditing;
 
   const UserInfoScreen({
     super.key,
     required this.repository,
+    this.isEditing = false,
   });
 
   @override
@@ -23,7 +27,8 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
     text: '10000',
   );
 
-  bool _isLoading = false;
+  bool _isLoading = true;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -32,8 +37,6 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
   }
 
   Future<void> _loadProfile() async {
-    setState(() => _isLoading = true);
-
     try {
       final profile = await widget.repository.getProfile();
 
@@ -44,7 +47,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
         _weightController.text = profile.weightKg.toString();
         _stepGoalController.text = profile.dailyStepGoal.toString();
       }
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,44 +96,51 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
     return null;
   }
 
-Future<void> _saveProfile() async {
-  if (!_formKey.currentState!.validate()) return;
+  Future<void> _saveProfile() async {
+    if (_isSaving || !_formKey.currentState!.validate()) {
+      return;
+    }
 
-  FocusScope.of(context).unfocus();
+    FocusScope.of(context).unfocus();
 
-  setState(() => _isLoading = true);
+    setState(() => _isSaving = true);
 
-  try {
-    await widget.repository.saveProfile(
-      heightCm: double.parse(
-        _heightController.text.trim().replaceAll(',', '.'),
-      ),
-      weightKg: double.parse(
-        _weightController.text.trim().replaceAll(',', '.'),
-      ),
-      dailyStepGoal: int.parse(
-        _stepGoalController.text.trim(),
-      ),
-    );
+    try {
+      await widget.repository.saveProfile(
+        heightCm: double.parse(
+          _heightController.text.trim().replaceAll(',', '.'),
+        ),
+        weightKg: double.parse(
+          _weightController.text.trim().replaceAll(',', '.'),
+        ),
+        dailyStepGoal: int.parse(
+          _stepGoalController.text.trim(),
+        ),
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    context.go('/permissions');
+      if (widget.isEditing) {
+        // Profil üzerinden düzenleme yapıldı.
+        context.pop(true);
+      } else {
+        // Kullanıcının ilk kurulumu.
+        context.go('/permissions');
+      }
+    } catch (_) {
+      if (!mounted) return;
 
-  } catch (e) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Bilgiler kaydedilemedi.'),
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bilgiler kaydedilemedi.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
-}
 
   @override
   void dispose() {
@@ -154,6 +164,12 @@ Future<void> _saveProfile() async {
     }
 
     return Scaffold(
+      appBar: widget.isEditing
+          ? AppBar(
+              title: const Text('Kişisel Bilgiler'),
+              centerTitle: true,
+            )
+          : null,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -177,7 +193,9 @@ Future<void> _saveProfile() async {
                 const SizedBox(height: 24),
 
                 Text(
-                  'Hakkında Biraz Bilgi',
+                  widget.isEditing
+                      ? 'Bilgilerini Düzenle'
+                      : 'Hakkında Biraz Bilgi',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -187,7 +205,9 @@ Future<void> _saveProfile() async {
                 const SizedBox(height: 12),
 
                 Text(
-                  'Aktivite hedeflerini sana göre kişiselleştirelim.',
+                  widget.isEditing
+                      ? 'Kişisel bilgilerini ve günlük hedefini güncelle.'
+                      : 'Aktivite hedeflerini sana göre kişiselleştirelim.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
@@ -245,13 +265,26 @@ Future<void> _saveProfile() async {
                 SizedBox(
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _saveProfile,
+                    onPressed: _isSaving ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primary,
                       foregroundColor: colors.onPrimary,
                       shape: const StadiumBorder(),
                     ),
-                    child: const Text('Devam Et'),
+                    child: _isSaving
+                        ? SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.onPrimary,
+                            ),
+                          )
+                        : Text(
+                            widget.isEditing
+                                ? 'Değişiklikleri Kaydet'
+                                : 'Devam Et',
+                          ),
                   ),
                 ),
               ],
