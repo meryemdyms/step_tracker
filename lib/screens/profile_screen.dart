@@ -140,19 +140,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Column(
                 children: [
+                  // Kişisel Bilgiler
                   _profileOption(
                     icon: Icons.person_outline_rounded,
                     title: 'Kişisel Bilgiler',
                     subtitle: 'Boy, kilo ve diğer bilgiler',
                     onTap: () async {
-                      final updated =
-                          await context.push<bool>('/edit-profile');
+                      await context.push('/edit-profile');
 
                       if (!mounted) return;
 
-                      if (updated == true) {
-                        await _loadProfile();
-                      }
+                      await _loadProfile();
                     },
                   ),
 
@@ -162,19 +160,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     endIndent: 16,
                   ),
 
+                  // Adım Hedefi
                   _profileOption(
                     icon: Icons.track_changes_rounded,
                     title: 'Adım Hedefi',
                     subtitle: goalText,
                     onTap: () async {
-                      final updated =
-                          await context.push<bool>('/step-goal');
+                      await context.push('/step-goal');
 
                       if (!mounted) return;
 
-                      if (updated == true) {
-                        await _loadProfile();
-                      }
+                      await _loadProfile();
                     },
                   ),
 
@@ -184,14 +180,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     endIndent: 16,
                   ),
 
+                  // Bildirimler - yalnızca bir tane
                   _profileOption(
                     icon: Icons.notifications_none_rounded,
                     title: 'Bildirimler',
-                    subtitle: 'Hedef ve hatırlatmalar',
+                    subtitle: 'Günlük yürüyüş hatırlatmaları',
                     onTap: () {
-                      _showMessage(
-                        'Bildirim ayarları henüz hazırlanmadı.',
-                      );
+                      context.push('/notification-settings');
                     },
                   ),
 
@@ -201,12 +196,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     endIndent: 16,
                   ),
 
-                  // Veri Senkronizasyonu yerine bu seçenek geldi.
+                  // İzin Yönetimi
                   _profileOption(
                     icon: Icons.admin_panel_settings_outlined,
                     title: 'İzin Yönetimi',
-                    subtitle:
-                        'Konum, hareket ve sağlık izinleri',
+                    subtitle: 'Konum, hareket ve sağlık izinleri',
                     onTap: () {
                       context.push('/permission-settings');
                     },
@@ -218,6 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     endIndent: 16,
                   ),
 
+                  // Tema
                   _profileOption(
                     icon: Icons.brightness_6_outlined,
                     title: 'Tema',

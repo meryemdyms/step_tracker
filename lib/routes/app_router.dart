@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,6 +19,7 @@ import '../screens/walking_summary_screen.dart';
 import '../screens/step_goal_screen.dart';
 import '../screens/theme_settings_screen.dart';
 import '../screens/permission_settings_screen.dart';
+import '../screens/notification_settings_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
@@ -30,51 +30,41 @@ GoRouter createAppRouter(AppDatabase database) {
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (context, state) => SplashScreen(
-          repository: profileRepository,
-        ),
+        builder: (context, state) =>
+            SplashScreen(repository: profileRepository),
       ),
 
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) =>
-            const OnboardingScreen(),
+        builder: (context, state) => const OnboardingScreen(),
       ),
 
       GoRoute(
         path: '/user-info',
-        builder: (context, state) => UserInfoScreen(
-          repository: profileRepository,
-        ),
+        builder: (context, state) =>
+            UserInfoScreen(repository: profileRepository),
       ),
 
       GoRoute(
         path: '/edit-profile',
-        builder: (context, state) => UserInfoScreen(
-          repository: profileRepository,
-          isEditing: true,
-        ),
+        builder: (context, state) =>
+            UserInfoScreen(repository: profileRepository, isEditing: true),
       ),
 
       GoRoute(
         path: '/permissions',
-        builder: (context, state) =>
-            const PermissionsScreen(),
+        builder: (context, state) => const PermissionsScreen(),
       ),
 
       ShellRoute(
         builder: (context, state, child) {
-          return MainShell(
-            location: state.uri.path,
-            child: child,
-          );
+          return MainShell(location: state.uri.path, child: child);
         },
         routes: [
           GoRoute(
             path: '/home',
-            builder: (context, state) => HomeScreen(
-              repository: profileRepository,
-            ),
+            builder: (context, state) =>
+                HomeScreen(repository: profileRepository),
           ),
 
           GoRoute(
@@ -87,16 +77,14 @@ GoRouter createAppRouter(AppDatabase database) {
 
           GoRoute(
             path: '/history',
-            builder: (context, state) => HistoryScreen(
-              repository: walkingRepository,
-            ),
+            builder: (context, state) =>
+                HistoryScreen(repository: walkingRepository),
           ),
 
           GoRoute(
             path: '/profile',
-            builder: (context, state) => ProfileScreen(
-              repository: profileRepository,
-            ),
+            builder: (context, state) =>
+                ProfileScreen(repository: profileRepository),
           ),
         ],
       ),
@@ -117,9 +105,7 @@ GoRouter createAppRouter(AppDatabase database) {
           );
 
           if (sessionId == null) {
-            return const _PlaceholderScreen(
-              title: 'Geçersiz Yürüyüş Kaydı',
-            );
+            return const _PlaceholderScreen(title: 'Geçersiz Yürüyüş Kaydı');
           }
 
           return WalkingSummaryScreen(
@@ -132,28 +118,27 @@ GoRouter createAppRouter(AppDatabase database) {
       GoRoute(
         path: '/walking-detail',
         builder: (context, state) =>
-            const _PlaceholderScreen(
-          title: 'Yürüyüş Detayı',
-        ),
+            const _PlaceholderScreen(title: 'Yürüyüş Detayı'),
       ),
 
       GoRoute(
         path: '/step-goal',
-        builder: (context, state) => StepGoalScreen(
-          repository: profileRepository,
-        ),
+        builder: (context, state) =>
+            StepGoalScreen(repository: profileRepository),
       ),
 
       GoRoute(
         path: '/theme-settings',
-        builder: (context, state) =>
-            const ThemeSettingsScreen(),
+        builder: (context, state) => const ThemeSettingsScreen(),
       ),
       GoRoute(
-  path: '/permission-settings',
-  builder: (context, state) =>
-      const PermissionSettingsScreen(),
-),
+        path: '/permission-settings',
+        builder: (context, state) => const PermissionSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/notification-settings',
+        builder: (context, state) => const NotificationSettingsScreen(),
+      ),
     ],
   );
 }
@@ -161,19 +146,13 @@ GoRouter createAppRouter(AppDatabase database) {
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
 
-  const _PlaceholderScreen({
-    required this.title,
-  });
+  const _PlaceholderScreen({required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Center(
-        child: Text('$title ekranı hazırlanacak'),
-      ),
+      appBar: AppBar(title: Text(title)),
+      body: Center(child: Text('$title ekranı hazırlanacak')),
     );
   }
 }
