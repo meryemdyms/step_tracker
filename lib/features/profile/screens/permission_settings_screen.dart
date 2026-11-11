@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../services/step_service.dart';
+import '../../../core/services/step_service.dart';
 
 class PermissionSettingsScreen extends StatefulWidget {
   const PermissionSettingsScreen({super.key});

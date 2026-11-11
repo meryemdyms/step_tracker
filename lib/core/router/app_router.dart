@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../database/app_database.dart';
-import '../repositories/user_profile_repository.dart';
-import '../repositories/walking_repository.dart';
+import '../../features/profile/repositories/user_profile_repository.dart';
+import '../../features/walking/repositories/walking_repository.dart';
 
-import '../screens/main_shell.dart';
-import '../screens/splash_screen.dart';
-import '../screens/onboarding_screen.dart';
-import '../screens/user_info_screen.dart';
-import '../screens/permissions_screen.dart';
-import '../screens/home_screen.dart';
-import '../screens/statistics_screen.dart';
-import '../screens/history_screen.dart';
-import '../screens/profile_screen.dart';
-import '../screens/walking_map_screen.dart';
-import '../screens/walking_summary_screen.dart';
-import '../screens/step_goal_screen.dart';
-import '../screens/theme_settings_screen.dart';
-import '../screens/permission_settings_screen.dart';
-import '../screens/notification_settings_screen.dart';
+import 'main_shell.dart';
+import '../../features/onboarding/screens/splash_screen.dart';
+import '../../features/onboarding/screens/onboarding_screen.dart';
+import '../../features/profile/screens/user_info_screen.dart';
+import '../../features/onboarding/screens/permissions_screen.dart';
+import '../../features/home/screens/home_screen.dart';
+import '../../features/statistics/screens/statistics_screen.dart';
+import '../../features/history/screens/history_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
+import '../../features/walking/screens/walking_map_screen.dart';
+import '../../features/walking/screens/walking_summary_screen.dart';
+import '../../features/profile/screens/step_goal_screen.dart';
+import '../../features/profile/screens/theme_settings_screen.dart';
+import '../../features/profile/screens/permission_settings_screen.dart';
+import '../../features/profile/screens/notification_settings_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);

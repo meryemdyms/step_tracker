@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../services/onboarding_status_service.dart';
-import '../services/step_service.dart';
+import '../../../core/services/step_service.dart';
 
 class PermissionsScreen extends StatefulWidget {
   const PermissionsScreen({super.key});

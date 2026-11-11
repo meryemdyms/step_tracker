@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../services/theme_service.dart';
+import '../../../core/services/theme_service.dart';
 
 class ThemeSettingsScreen extends StatefulWidget {
   const ThemeSettingsScreen({super.key});

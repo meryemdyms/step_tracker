@@ -4,7 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../database/app_database.dart';
+import '../../../core/database/app_database.dart';
 import '../repositories/walking_repository.dart';
 
 class WalkingSummaryScreen extends StatefulWidget {

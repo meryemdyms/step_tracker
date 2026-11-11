@@ -1,7 +1,7 @@
 
 import 'package:drift/drift.dart';
 
-import '../database/app_database.dart';
+import '../../../core/database/app_database.dart';
 
 class WalkingRepository {
   final AppDatabase _database;

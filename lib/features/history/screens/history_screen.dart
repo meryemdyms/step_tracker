@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../database/app_database.dart';
-import '../repositories/walking_repository.dart';
+import '../../../core/database/app_database.dart';
+import '../../walking/repositories/walking_repository.dart';
 
 class HistoryScreen extends StatefulWidget {
   final WalkingRepository repository;

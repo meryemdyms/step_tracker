@@ -5,10 +5,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../repositories/user_profile_repository.dart';
-import '../services/step_service.dart';
-import '../services/activity_calculation_service.dart';
-import '../services/notification_service.dart';
+import '../../profile/repositories/user_profile_repository.dart';
+import '../../../core/services/step_service.dart';
+import '../../../core/services/activity_calculation_service.dart';
+import '../../../core/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserProfileRepository repository;

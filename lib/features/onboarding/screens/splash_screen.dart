@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../repositories/user_profile_repository.dart';
+import '../../profile/repositories/user_profile_repository.dart';
 import '../services/onboarding_status_service.dart';
 
 class SplashScreen extends StatefulWidget {

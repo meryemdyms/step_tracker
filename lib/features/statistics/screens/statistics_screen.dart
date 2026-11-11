@@ -1,11 +1,11 @@
 
 import 'package:flutter/material.dart';
 
-import '../database/app_database.dart';
-import '../repositories/user_profile_repository.dart';
-import '../repositories/walking_repository.dart';
-import '../services/activity_calculation_service.dart';
-import '../services/step_service.dart';
+import '../../../core/database/app_database.dart';
+import '../../profile/repositories/user_profile_repository.dart';
+import '../../walking/repositories/walking_repository.dart';
+import '../../../core/services/activity_calculation_service.dart';
+import '../../../core/services/step_service.dart';
 
 enum StatisticsPeriod {
   weekly,

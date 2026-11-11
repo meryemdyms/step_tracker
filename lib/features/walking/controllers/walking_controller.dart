@@ -8,7 +8,7 @@ import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../repositories/walking_repository.dart';
-import '../services/location_service.dart';
+import '../../../core/services/location_service.dart';
 
 enum WalkingStatus {
   idle,

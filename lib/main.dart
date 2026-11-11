@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_theme.dart';
-import 'database/app_database.dart';
-import 'routes/app_router.dart';
-import 'services/theme_service.dart';
+import 'core/database/app_database.dart';
+import 'core/router/app_router.dart';
+import 'core/services/theme_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

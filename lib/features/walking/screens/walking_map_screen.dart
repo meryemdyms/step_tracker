@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../controllers/walking_controller.dart';
-import '../repositories/user_profile_repository.dart';
+import '../../profile/repositories/user_profile_repository.dart';
 import '../repositories/walking_repository.dart';
-import '../services/activity_calculation_service.dart';
-import '../services/location_service.dart';
+import '../../../core/services/activity_calculation_service.dart';
+import '../../../core/services/location_service.dart';
 
 class WalkingMapScreen extends StatefulWidget {
   final WalkingRepository walkingRepository;
