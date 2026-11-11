@@ -101,24 +101,24 @@ class _SplashScreenState extends State<SplashScreen> {
 
                   const SizedBox(height: 24),
 
-                  Text(
+                 Text(
   'StepPulse',
   style: TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
     letterSpacing: 1.5,
-    color: Colors.black,
+    color: colors.onSurface,
   ),
 ),
 
                   const SizedBox(height: 12),
 
-                  Text(
-                    'Her adımın bir başlangıç.',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
+                Text(
+  'Her adımın bir başlangıç.',
+  style: theme.textTheme.bodyLarge?.copyWith(
+    color: colors.onSurfaceVariant,
+  ),
+),
                 ],
               ),
             ),

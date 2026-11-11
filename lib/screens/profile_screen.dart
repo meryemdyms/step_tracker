@@ -20,6 +20,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int? _dailyStepGoal;
   bool _isLoading = true;
 
+  // Dark mode renk paleti
+  static const Color _darkBackground = Color(0xFF0F151B);
+  static const Color _darkCard = Color(0xFF1B2630);
+  static const Color _darkAccent = Color(0xFF62A8C5);
+  static const Color _darkSubtitle = Color(0xFFB9B0B0);
+  static const Color _darkDivider = Color(0xFF34414B);
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
@@ -69,23 +77,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       leading: Icon(
         icon,
-        color: colors.secondary,
+        color: isDark ? _darkAccent : colors.secondary,
         size: 26,
       ),
       title: Text(
         title,
         style: theme.textTheme.titleSmall?.copyWith(
+          color: isDark ? Colors.white : colors.onSurface,
           fontWeight: FontWeight.w600,
         ),
       ),
       subtitle: Text(
         subtitle,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: colors.onSurfaceVariant,
+          color: isDark
+              ? _darkSubtitle
+              : colors.onSurfaceVariant,
         ),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.chevron_right_rounded,
+        color: isDark
+            ? Colors.white
+            : colors.onSurfaceVariant,
       ),
       onTap: onTap,
     );
@@ -95,6 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     final goalText = _isLoading
         ? 'Yükleniyor...'
@@ -103,6 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : 'Günlük hedefin: $_dailyStepGoal';
 
     return Scaffold(
+      backgroundColor:
+          isDark ? _darkBackground : null,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -110,6 +127,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               'Profil',
               style: theme.textTheme.headlineSmall?.copyWith(
+                color: isDark
+                    ? Colors.white
+                    : colors.onSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -119,10 +139,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Center(
               child: CircleAvatar(
                 radius: 48,
-                backgroundColor: colors.secondary,
+                backgroundColor: isDark
+                    ? _darkCard
+                    : colors.secondary,
                 child: Icon(
                   Icons.person_rounded,
-                  color: colors.onSecondary,
+                  color: isDark
+                      ? _darkAccent
+                      : colors.onSecondary,
                   size: 56,
                 ),
               ),
@@ -131,9 +155,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 32),
 
             Card(
-              color: theme.brightness == Brightness.light
-                  ? Colors.white
-                  : colors.surfaceContainerLow,
+              margin: EdgeInsets.zero,
+              color: isDark ? _darkCard : Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -154,11 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
 
-                  const Divider(
-                    height: 1,
-                    indent: 16,
-                    endIndent: 16,
-                  ),
+                  _optionDivider(isDark),
 
                   // Adım Hedefi
                   _profileOption(
@@ -174,13 +193,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
 
-                  const Divider(
-                    height: 1,
-                    indent: 16,
-                    endIndent: 16,
-                  ),
+                  _optionDivider(isDark),
 
-                  // Bildirimler - yalnızca bir tane
+                  // Bildirimler
                   _profileOption(
                     icon: Icons.notifications_none_rounded,
                     title: 'Bildirimler',
@@ -190,11 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
 
-                  const Divider(
-                    height: 1,
-                    indent: 16,
-                    endIndent: 16,
-                  ),
+                  _optionDivider(isDark),
 
                   // İzin Yönetimi
                   _profileOption(
@@ -206,11 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
 
-                  const Divider(
-                    height: 1,
-                    indent: 16,
-                    endIndent: 16,
-                  ),
+                  _optionDivider(isDark),
 
                   // Tema
                   _profileOption(
@@ -227,6 +234,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _optionDivider(bool isDark) {
+    return Divider(
+      height: 1,
+      indent: 16,
+      endIndent: 16,
+      color: isDark
+          ? _darkDivider
+          : Theme.of(context).dividerColor,
     );
   }
 }

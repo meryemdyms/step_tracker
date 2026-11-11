@@ -34,11 +34,12 @@ class NotificationService {
   static const String lastGoalNotificationKey =
       'last_goal_notification_date';
 
-  // Her bildirim türünün ID'si farklı.
+  // Bildirim ID'leri
   static const int reminderId = 1001;
   static const int testId = 1002;
   static const int goalId = 1003;
 
+  // Bildirim kanalları
   static const String reminderChannelId =
       'daily_walking_reminder';
 
@@ -53,9 +54,6 @@ class NotificationService {
 
   bool _initialized = false;
   Future<void>? _initialization;
-
-  // Aynı anda yapılan adım kontrollerinin
-  // çift bildirim göndermesini önler.
   bool _checkingGoal = false;
 
   bool get _supported =>
@@ -63,6 +61,7 @@ class NotificationService {
       (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
 
+  // Bildirim servisini başlat
   Future<void> initialize() async {
     if (_initialized || !_supported) return;
 
@@ -81,10 +80,12 @@ class NotificationService {
   }
 
   Future<void> _initializeInternal() async {
+    // Android: Mevcut StepPulse uygulama ikonu
     const android = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
 
+    // iOS: Uygulama ikonu otomatik kullanılır
     const ios = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -98,6 +99,7 @@ class NotificationService {
 
     await _plugin.initialize(settings: settings);
 
+    // Yerel saat dilimi
     tz.initializeTimeZones();
 
     final timezone =
@@ -108,6 +110,7 @@ class NotificationService {
     );
   }
 
+  // Bildirim izni
   Future<bool> requestPermission() async {
     if (!_supported) return false;
 
@@ -135,6 +138,7 @@ class NotificationService {
         false;
   }
 
+  // Bir sonraki hatırlatma saatini hesapla
   tz.TZDateTime _nextReminderTime({
     required int hour,
     required int minute,
@@ -164,6 +168,7 @@ class NotificationService {
     return scheduled;
   }
 
+  // Günlük yürüyüş hatırlatması
   Future<void> scheduleDailyReminder({
     required int hour,
     required int minute,
@@ -190,7 +195,8 @@ class NotificationService {
         reminderChannelId,
         reminderChannelName,
         channelDescription:
-            'Günlük yürüyüş hatırlatmaları',
+            'StepPulse günlük yürüyüş hatırlatmaları',
+        icon: '@mipmap/ic_launcher',
         importance: Importance.high,
         priority: Priority.high,
       ),
@@ -203,7 +209,7 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       id: reminderId,
-      title: 'Yürüyüş zamanı',
+      title: 'StepPulse - Yürüyüş zamanı',
       body:
           'Bugün biraz hareket etmeye ne dersin? '
           'Adım hedefine bir adım daha yaklaş.',
@@ -218,6 +224,7 @@ class NotificationService {
     );
   }
 
+  // Günlük hatırlatmayı iptal et
   Future<void> cancelDailyReminder() async {
     if (!_supported) return;
 
@@ -225,6 +232,7 @@ class NotificationService {
     await _plugin.cancel(id: reminderId);
   }
 
+  // Test bildirimi
   Future<void> showTestNotification() async {
     if (!_supported) return;
 
@@ -235,25 +243,27 @@ class NotificationService {
         reminderChannelId,
         reminderChannelName,
         channelDescription:
-            'Günlük yürüyüş hatırlatmaları',
+            'StepPulse günlük yürüyüş hatırlatmaları',
+        icon: '@mipmap/ic_launcher',
         importance: Importance.high,
         priority: Priority.high,
       ),
       iOS: DarwinNotificationDetails(
         presentAlert: true,
+        presentBadge: false,
         presentSound: true,
       ),
     );
 
     await _plugin.show(
       id: testId,
-      title: 'Bildirim testi',
+      title: 'StepPulse - Bildirim Testi',
       body: 'Yürüyüş hatırlatıcıların hazır.',
       notificationDetails: details,
     );
   }
 
-  // Her yerel takvim günü için benzersiz anahtar.
+  // Bugünün tarih anahtarı
   String _todayKey() {
     final now = DateTime.now();
 
@@ -263,7 +273,7 @@ class NotificationService {
     return '${now.year}-$month-$day';
   }
 
-  // HomeScreen gerçek adımları okuduğunda çağrılır.
+  // Günlük adım hedefi kontrolü
   Future<void> checkDailyStepGoal({
     required int steps,
     required int goal,
@@ -285,7 +295,7 @@ class NotificationService {
       final lastNotified =
           await _prefs.getString(lastGoalNotificationKey);
 
-      // Bugün zaten bildirim gönderilmiş.
+      // Bugün zaten bildirim gönderildiyse çık
       if (lastNotified == today) return;
 
       await initialize();
@@ -295,7 +305,8 @@ class NotificationService {
           goalChannelId,
           goalChannelName,
           channelDescription:
-              'Günlük adım hedefi tamamlandığında bildirim',
+              'StepPulse günlük adım hedefi bildirimleri',
+          icon: '@mipmap/ic_launcher',
           importance: Importance.high,
           priority: Priority.high,
         ),
@@ -308,14 +319,14 @@ class NotificationService {
 
       await _plugin.show(
         id: goalId,
-        title: 'Günlük hedefini tamamladın!',
+        title: 'StepPulse - Hedef tamamlandı!',
         body:
             'Tebrikler! Bugün $steps adım attın '
             've $goal adımlık hedefine ulaştın.',
         notificationDetails: details,
       );
 
-      // Başarılı gönderimden sonra tarihi kaydet.
+      // Başarılı gönderimden sonra kaydet
       await _prefs.setString(
         lastGoalNotificationKey,
         today,
