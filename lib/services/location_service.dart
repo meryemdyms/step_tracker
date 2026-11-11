@@ -2,8 +2,8 @@
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
-
-  // Konum servisinin ve iznin kullanılabilirliğini kontrol eder.
+  // Konum servisinin açık ve iznin verilmiş
+  // olup olmadığını kontrol eder.
   Future<bool> checkLocationPermission() async {
     final serviceEnabled =
         await Geolocator.isLocationServiceEnabled();
@@ -18,7 +18,7 @@ class LocationService {
         permission == LocationPermission.always;
   }
 
-  // Telefonun mevcut konumunu alır.
+  // Kullanıcı hareket etmese bile mevcut GPS konumunu alır.
   Future<Position> getCurrentLocation() async {
     final hasPermission = await checkLocationPermission();
 
@@ -31,11 +31,12 @@ class LocationService {
     return Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 10),
       ),
     );
   }
 
-  // Yürüyüş sırasında canlı GPS konumlarını sağlar.
+  // Kullanıcı yürüdükçe canlı GPS konumlarını sağlar.
   Stream<Position> getLocationStream() async* {
     final hasPermission = await checkLocationPermission();
 
@@ -55,7 +56,7 @@ class LocationService {
     );
   }
 
-  // İki GPS noktası arasındaki mesafeyi metre olarak hesaplar.
+  // İki koordinat arasındaki mesafeyi metre cinsinden hesaplar.
   double calculateDistance({
     required double startLatitude,
     required double startLongitude,
