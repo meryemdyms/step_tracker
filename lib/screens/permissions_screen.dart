@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
-
+import '../services/onboarding_status_service.dart';
 class PermissionsScreen extends StatefulWidget {
   const PermissionsScreen({super.key});
 
@@ -26,6 +26,9 @@ class _PermissionsScreenState extends State<PermissionsScreen>
   bool get _isIOS =>
       !kIsWeb &&
       defaultTargetPlatform == TargetPlatform.iOS;
+
+  final OnboardingStatusService _onboardingStatus =
+    OnboardingStatusService();
 
   @override
   void initState() {
@@ -133,31 +136,47 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     }
   }
 
-  Future<void> _requestAndContinue() async {
-    if (_isLoading) return;
+  
+Future<void> _requestAndContinue() async {
+  if (_isLoading) return;
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      if (_isAndroid && !_activityGranted) {
-        await _requestActivityPermission();
-      }
+  try {
+    // Android aktivite izni
+    if (_isAndroid && !_activityGranted) {
+      await _requestActivityPermission();
+    }
 
-      if ((_isAndroid || _isIOS) && !_locationGranted) {
-        await _requestLocationPermission();
-      }
+    // Android ve iOS konum izni
+    if ((_isAndroid || _isIOS) && !_locationGranted) {
+      await _requestLocationPermission();
+    }
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      // İzin verilmemiş olsa da kullanıcı kuruluma
-      // devam edebilir. GPS özelliği izin gerektirir.
-      context.go('/home');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    // Kullanıcı izin vermese bile kurulum aşamasını
+    // tamamlamayı seçebilir.
+    await _onboardingStatus.markCompleted();
+
+    if (!mounted) return;
+
+    // Artık sonraki açılışlarda Splash,
+    // kullanıcıyı doğrudan ana sayfaya yönlendirebilir.
+    context.go('/home');
+  } catch (_) {
+    if (!mounted) return;
+
+    _showMessage(
+      'Kurulum durumu kaydedilemedi. Tekrar deneyin.',
+    );
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
+
 
   void _showMessage(String message) {
     if (!mounted) return;

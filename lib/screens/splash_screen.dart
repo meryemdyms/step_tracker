@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../repositories/user_profile_repository.dart';
+import '../services/onboarding_status_service.dart';
 
 class SplashScreen extends StatefulWidget {
   final UserProfileRepository repository;
@@ -17,6 +18,9 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final OnboardingStatusService _onboardingStatus =
+      OnboardingStatusService();
+
   @override
   void initState() {
     super.initState();
@@ -25,36 +29,54 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkInitialRoute() async {
     try {
-      // Splash animasyonu en az 2 saniye gösterilsin.
-      final results = await Future.wait([
-        Future.delayed(const Duration(seconds: 2)),
-        widget.repository.getProfile(),
+      // Splash en az 2 saniye gösterilirken
+      // kurulum durumu kontrol edilir.
+      final results = await Future.wait<Object?>([
+        Future<void>.delayed(
+          const Duration(seconds: 2),
+        ),
+        _getInitialRoute(),
       ]);
 
       if (!mounted) return;
 
-      final profile = results[1];
+      final destination = results[1] as String;
 
-      if (profile == null) {
-        // Kullanıcı henüz bilgilerini kaydetmemiş.
-        context.go('/onboarding');
-      } else {
-        // Kullanıcı bilgileri var.
-        // İzin akışının tamamlanma kontrolünü
-        // sonraki adımda ekleyeceğiz.
-        context.go('/permissions');
-      }
+      context.go(destination);
     } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Kullanıcı bilgileri kontrol edilemedi.',
+            'Açılış bilgileri kontrol edilemedi.',
           ),
         ),
       );
     }
+  }
+
+  Future<String> _getInitialRoute() async {
+    // Drift veritabanındaki kullanıcı bilgilerini kontrol et.
+    final profile = await widget.repository.getProfile();
+
+    // Kullanıcı bilgileri kayıtlı değilse ilk giriş.
+    if (profile == null) {
+      return '/onboarding';
+    }
+
+    // Kullanıcı bilgileri kayıtlıysa
+    // kurulumun tamamlanma durumunu kontrol et.
+    final completed = await _onboardingStatus.isCompleted();
+
+    if (completed) {
+      // Kullanıcı daha önce kurulumu tamamlamış.
+      return '/home';
+    }
+
+    // Kullanıcı bilgileri var ancak izin ekranı
+    // henüz tamamlanmamış.
+    return '/permissions';
   }
 
   @override
@@ -122,7 +144,9 @@ class _SplashScreenState extends State<SplashScreen> {
 class _WavePainter extends CustomPainter {
   final Color color;
 
-  _WavePainter({required this.color});
+  _WavePainter({
+    required this.color,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
