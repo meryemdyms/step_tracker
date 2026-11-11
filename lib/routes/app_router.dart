@@ -26,10 +26,12 @@ GoRouter createAppRouter(AppDatabase database) {
     initialLocation: '/splash',
     routes: [
       // Splash ekranı
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashScreen(),
-      ),
+    GoRoute(
+  path: '/splash',
+  builder: (context, state) => SplashScreen(
+    repository: profileRepository,
+  ),
+),
 
       // Onboarding ekranı
       GoRoute(

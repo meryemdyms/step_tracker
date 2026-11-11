@@ -2,8 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../repositories/user_profile_repository.dart';
+
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final UserProfileRepository repository;
+
+  const SplashScreen({
+    super.key,
+    required this.repository,
+  });
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -13,15 +20,41 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToOnboarding();
+    _checkInitialRoute();
   }
 
-  Future<void> _navigateToOnboarding() async {
-    await Future.delayed(const Duration(seconds: 2));
+  Future<void> _checkInitialRoute() async {
+    try {
+      // Splash animasyonu en az 2 saniye gösterilsin.
+      final results = await Future.wait([
+        Future.delayed(const Duration(seconds: 2)),
+        widget.repository.getProfile(),
+      ]);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    context.go('/onboarding');
+      final profile = results[1];
+
+      if (profile == null) {
+        // Kullanıcı henüz bilgilerini kaydetmemiş.
+        context.go('/onboarding');
+      } else {
+        // Kullanıcı bilgileri var.
+        // İzin akışının tamamlanma kontrolünü
+        // sonraki adımda ekleyeceğiz.
+        context.go('/permissions');
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Kullanıcı bilgileri kontrol edilemedi.',
+          ),
+        ),
+      );
+    }
   }
 
   @override
