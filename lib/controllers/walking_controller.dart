@@ -1,11 +1,14 @@
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:pedometer/pedometer.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-import '../services/location_service.dart';
 import '../repositories/walking_repository.dart';
+import '../services/location_service.dart';
 
 enum WalkingStatus {
   idle,
@@ -27,46 +30,31 @@ class WalkingController extends ChangeNotifier {
   WalkingStatus _status = WalkingStatus.idle;
   WalkingStatus get status => _status;
 
-  // Drift yürüyüş kaydının ID'si
   int? _sessionId;
   int? get sessionId => _sessionId;
 
-  // Süre
-  final Stopwatch _stopwatch = Stopwatch();
-  Timer? _timer;
-
-  int get durationSeconds => _stopwatch.elapsed.inSeconds;
-
-  // GPS
-  StreamSubscription<Position>? _positionSubscription;
-  Position? _lastPosition;
-
-  final List<Position> _routePositions = [];
-
-  List<Position> get routePositions =>
-      List.unmodifiable(_routePositions);
-
-  // Mesafe
-  double _distanceMeters = 0;
-  double get distanceMeters => _distanceMeters;
-
-  // İşlem durumu
   bool _isBusy = false;
   bool get isBusy => _isBusy;
 
+  bool _disposed = false;
+
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
-
-  // GPS verilerini sırayla işlemek için kullanılır.
-  Future<void> _pendingPositions = Future<void>.value();
-
-  bool _disposed = false;
 
   void _notify() {
     if (!_disposed) {
       notifyListeners();
     }
   }
+
+  // --------------------
+  // SÜRE
+  // --------------------
+
+  final Stopwatch _stopwatch = Stopwatch();
+  Timer? _timer;
+
+  int get durationSeconds => _stopwatch.elapsed.inSeconds;
 
   void _startTimer() {
     _timer?.cancel();
@@ -82,109 +70,83 @@ class WalkingController extends ChangeNotifier {
     _timer = null;
   }
 
-  // GPS akışını başlatır.
+  // --------------------
+  // GPS
+  // --------------------
+
+  StreamSubscription<Position>? _positionSubscription;
+  Position? _lastPosition;
+
+  final List<Position> _routePositions = [];
+
+  List<Position> get routePositions =>
+      List.unmodifiable(_routePositions);
+
+  double _distanceMeters = 0;
+  double get distanceMeters => _distanceMeters;
+
+  Future<void> _pendingPositions = Future<void>.value();
+
   void _startLocationTracking() {
-    if (_positionSubscription != null || _disposed) {
+    if (_disposed || _positionSubscription != null) {
       return;
     }
 
     _positionSubscription =
         _locationService.getLocationStream().listen(
       (position) {
-        _pendingPositions = _pendingPositions.then((_) async {
-          try {
-            await _handlePosition(position);
-          } catch (_) {
-            _errorMessage = 'GPS noktası kaydedilemedi.';
-            _notify();
-          }
-        });
+        _pendingPositions = _pendingPositions.then(
+          (_) async {
+            try {
+              await _handlePosition(position);
+            } catch (e) {
+              _errorMessage =
+                  'GPS noktası kaydedilemedi: $e';
+              _notify();
+            }
+          },
+        );
       },
       onError: (Object error) {
-        if (_disposed ||
-            _status != WalkingStatus.active) {
-          return;
-        }
+        if (_disposed) return;
 
         _errorMessage =
             'GPS takibi sırasında hata oluştu: $error';
 
+        // GPS hatası yürüyüşü duraklatmaz.
         _notify();
-
-        // GPS akışı hata verirse yürüyüşü duraklat.
-        unawaited(pauseWalking());
       },
     );
   }
 
-  // Yürüyüşü başlatır.
-  
-Future<void> startWalking() async {
-  if (_status != WalkingStatus.idle ||
-      _isBusy ||
-      _disposed) {
-    return;
-  }
+  Future<void> _getInitialLocation() async {
+    try {
+      final position =
+          await _locationService.getCurrentLocation();
 
-  _isBusy = true;
-  _errorMessage = null;
-  _notify();
+      if (_disposed || _status != WalkingStatus.active) {
+        return;
+      }
 
-  try {
-    final hasPermission =
-        await _locationService.checkLocationPermission();
-
-    if (!hasPermission) {
-      throw StateError(
-        'Konum servisi kapalı veya konum izni verilmemiş.',
+      _pendingPositions = _pendingPositions.then(
+        (_) => _handlePosition(position),
       );
+
+      await _pendingPositions;
+    } catch (e) {
+      debugPrint('Başlangıç GPS hatası: $e');
+
+      // Yürüyüş GPS'i beklemeden devam eder.
     }
-
-    // Önce GPS konumunu al.
-    final initialPosition =
-        await _locationService.getCurrentLocation();
-
-    debugPrint(
-      'GPS bulundu: ${initialPosition.latitude}, '
-      '${initialPosition.longitude}',
-    );
-
-    // Konum olmadan yürüyüş oturumu oluşturma.
-    final id = await _walkingRepository.startWalking();
-
-    _sessionId = id;
-    _status = WalkingStatus.active;
-
-    // Başlangıç noktasını kaydet.
-    // Bu noktada mesafe henüz 0 metre.
-    await _handlePosition(initialPosition);
-
-    // GPS bulunduğuna göre süreyi başlat.
-    _stopwatch.start();
-    _startTimer();
-
-    // Hareket oldukça yeni koordinatları al.
-    _startLocationTracking();
-  } catch (e) {
-    debugPrint('GPS başlatma hatası: $e');
-
-    _errorMessage = 'Konum alınamadı: $e';
-  } finally {
-    _isBusy = false;
-    _notify();
   }
-}
 
-
-  // Yeni GPS koordinatını işler.
   Future<void> _handlePosition(Position position) async {
-    if (_status != WalkingStatus.active ||
-        _sessionId == null ||
-        _disposed) {
+    if (_disposed ||
+        _status != WalkingStatus.active ||
+        _sessionId == null) {
       return;
     }
 
-    // Geçersiz koordinatları ele.
     if (!position.latitude.isFinite ||
         !position.longitude.isFinite ||
         position.latitude < -90 ||
@@ -202,10 +164,8 @@ Future<void> startWalking() async {
     final previous = _lastPosition;
     final isFirstPoint = previous == null;
 
-    // İlk noktanın haritada gösterilebilmesi
-    // için biraz daha geniş tolerans tanıyoruz.
-    // Hareket noktalarında daha sıkı filtre kullanılır.
-    final maxAccuracy = isFirstPoint ? 100.0 : 30.0;
+    final maxAccuracy =
+        isFirstPoint ? 100.0 : 30.0;
 
     if (position.accuracy > maxAccuracy) {
       return;
@@ -236,7 +196,6 @@ Future<void> startWalking() async {
         return;
       }
 
-      // Ani ve gerçekçi olmayan GPS sıçramalarını ele.
       final speedMetersPerSecond =
           calculatedDistance / elapsedSeconds;
 
@@ -244,14 +203,11 @@ Future<void> startWalking() async {
         return;
       }
 
-      // İlk ölçümün doğruluğu düşükse
-      // o noktadan sonraki sıçramayı mesafeye ekleme.
       if (previous.accuracy <= 30) {
         segmentDistance = calculatedDistance;
       }
     }
 
-    // Önce koordinatı Drift'e kaydet.
     await _walkingRepository.addRoutePoint(
       sessionId: _sessionId!,
       latitude: position.latitude,
@@ -262,16 +218,200 @@ Future<void> startWalking() async {
 
     if (_disposed) return;
 
-    // Kayıt başarılıysa canlı verileri güncelle.
     _distanceMeters += segmentDistance;
     _lastPosition = position;
     _routePositions.add(position);
 
-    _errorMessage = null;
     _notify();
   }
 
-  // Yürüyüşü duraklatır.
+  // --------------------
+  // ADIM SAYACI
+  // --------------------
+
+  StreamSubscription<StepCount>? _stepSubscription;
+
+  int _walkingSteps = 0;
+  int get walkingSteps => _walkingSteps;
+
+  int? _previousSensorSteps;
+  bool _waitingForStepBaseline = true;
+
+  bool _stepSensorReady = false;
+  bool get stepSensorReady => _stepSensorReady;
+
+  String? _stepError;
+  String? get stepError => _stepError;
+
+  bool _isStartingStepTracking = false;
+
+  Future<void> _startStepTracking() async {
+    if (_disposed ||
+        _stepSubscription != null ||
+        _isStartingStepTracking ||
+        _status != WalkingStatus.active) {
+      return;
+    }
+
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      _stepError =
+          'Adım sensörü bu platformda desteklenmiyor.';
+      _notify();
+      return;
+    }
+
+    _isStartingStepTracking = true;
+
+    try {
+      // Yalnızca izin kontrol edilir.
+      // Yürüyüş sırasında izin penceresi açılmaz.
+      final permission = Platform.isIOS
+          ? Permission.sensors
+          : Permission.activityRecognition;
+
+      final status = await permission.status;
+
+      if (_disposed ||
+          _status == WalkingStatus.completed ||
+          _status == WalkingStatus.idle) {
+        return;
+      }
+
+      if (!status.isGranted) {
+        _stepError =
+            'Hareket ve Fitness izni verilmedi.';
+        _stepSensorReady = false;
+        _notify();
+        return;
+      }
+
+      _stepError = null;
+      _waitingForStepBaseline = true;
+
+      _stepSubscription = Pedometer.stepCountStream.listen(
+        (StepCount event) {
+          if (_disposed ||
+              _status == WalkingStatus.completed) {
+            return;
+          }
+
+          final currentSteps = event.steps;
+
+          if (currentSteps < 0) return;
+
+          // İlk sensör ölçümü referans alınır.
+          if (_previousSensorSteps == null) {
+            _previousSensorSteps = currentSteps;
+            _waitingForStepBaseline = false;
+            _stepSensorReady = true;
+            _stepError = null;
+            _notify();
+            return;
+          }
+
+          // Duraklatılmış durumda yeni adım eklenmez.
+          if (_status == WalkingStatus.paused) {
+            _previousSensorSteps = currentSteps;
+            _waitingForStepBaseline = true;
+            return;
+          }
+
+          if (_status != WalkingStatus.active) {
+            return;
+          }
+
+          // Devam etme sonrasında ilk ölçümü
+          // yeni referans olarak kullan.
+          if (_waitingForStepBaseline) {
+            _previousSensorSteps = currentSteps;
+            _waitingForStepBaseline = false;
+            _stepSensorReady = true;
+            _notify();
+            return;
+          }
+
+          final difference =
+              currentSteps - _previousSensorSteps!;
+
+          // Sistem sayacı yeniden başlamış olabilir.
+          if (difference < 0) {
+            _previousSensorSteps = currentSteps;
+            return;
+          }
+
+          _previousSensorSteps = currentSteps;
+
+          if (difference == 0) return;
+
+          _walkingSteps += difference;
+          _stepSensorReady = true;
+          _stepError = null;
+
+          _notify();
+        },
+        onError: (Object error) {
+          _stepError =
+              'Adım sensörü okunamadı: $error';
+          _stepSensorReady = false;
+          _notify();
+        },
+      );
+    } catch (e) {
+      _stepError =
+          'Adım takibi başlatılamadı: $e';
+      _stepSensorReady = false;
+      _notify();
+    } finally {
+      _isStartingStepTracking = false;
+    }
+  }
+
+  // --------------------
+  // YÜRÜYÜŞÜ BAŞLAT
+  // --------------------
+
+  Future<void> startWalking() async {
+    if (_disposed ||
+        _status != WalkingStatus.idle ||
+        _isBusy) {
+      return;
+    }
+
+    _isBusy = true;
+    _errorMessage = null;
+    _stepError = null;
+    _notify();
+
+    try {
+      final id = await _walkingRepository.startWalking();
+
+      if (_disposed) return;
+
+      _sessionId = id;
+      _status = WalkingStatus.active;
+
+      _stopwatch.start();
+      _startTimer();
+
+      // GPS ve adım takibi bağımsız çalışır.
+      unawaited(_getInitialLocation());
+
+      _startLocationTracking();
+
+      unawaited(_startStepTracking());
+    } catch (e) {
+      _errorMessage =
+          'Yürüyüş başlatılamadı: $e';
+    } finally {
+      _isBusy = false;
+      _notify();
+    }
+  }
+
+  // --------------------
+  // YÜRÜYÜŞÜ DURAKLAT
+  // --------------------
+
   Future<void> pauseWalking() async {
     if (_status != WalkingStatus.active ||
         _isBusy ||
@@ -282,7 +422,6 @@ Future<void> startWalking() async {
     _isBusy = true;
     _notify();
 
-    // Yeni konum alımını durdur.
     _positionSubscription?.pause();
 
     try {
@@ -295,12 +434,14 @@ Future<void> startWalking() async {
       _stopwatch.stop();
       _stopTimer();
 
-      // Önceden kuyruğa alınmış kayıtları bekle.
       await _pendingPositions;
 
-      // Devam edildiğinde eski GPS noktasından
-      // yeni konuma sahte mesafe hesaplanmasın.
+      // Duraklamadan sonra GPS mesafesi
+      // eski konumdan devam ettirilmez.
       _lastPosition = null;
+
+      // Adım sayacı yeniden referans alacak.
+      _waitingForStepBaseline = true;
     } catch (e) {
       _errorMessage =
           'Yürüyüş duraklatılamadı: $e';
@@ -314,7 +455,10 @@ Future<void> startWalking() async {
     }
   }
 
-  // Duraklatılmış yürüyüşe devam eder.
+  // --------------------
+  // YÜRÜYÜŞE DEVAM ET
+  // --------------------
+
   Future<void> resumeWalking() async {
     if (_status != WalkingStatus.paused ||
         _isBusy ||
@@ -327,20 +471,13 @@ Future<void> startWalking() async {
     _notify();
 
     try {
-      final hasPermission =
-          await _locationService.checkLocationPermission();
-
-      if (!hasPermission) {
-        throw StateError(
-          'Konum izni bulunamadı.',
-        );
-      }
-
       await _walkingRepository.resumeWalking(
         _sessionId!,
       );
 
       _lastPosition = null;
+      _waitingForStepBaseline = true;
+
       _status = WalkingStatus.active;
 
       _stopwatch.start();
@@ -351,6 +488,10 @@ Future<void> startWalking() async {
       } else {
         _positionSubscription!.resume();
       }
+
+      if (_stepSubscription == null) {
+        unawaited(_startStepTracking());
+      }
     } catch (e) {
       _errorMessage =
           'Yürüyüşe devam edilemedi: $e';
@@ -360,7 +501,10 @@ Future<void> startWalking() async {
     }
   }
 
-  // Yürüyüşü bitirir.
+  // --------------------
+  // YÜRÜYÜŞÜ BİTİR
+  // --------------------
+
   Future<void> finishWalking() async {
     if ((_status != WalkingStatus.active &&
             _status != WalkingStatus.paused) ||
@@ -372,25 +516,27 @@ Future<void> startWalking() async {
     _isBusy = true;
     _notify();
 
-    // Yeni GPS verilerini durdur.
     await _positionSubscription?.cancel();
     _positionSubscription = null;
+
+    await _stepSubscription?.cancel();
+    _stepSubscription = null;
 
     _stopwatch.stop();
     _stopTimer();
 
     try {
-      // İşlenmekte olan kayıtları tamamla.
       await _pendingPositions;
 
-      // Yürüyüş sonucunu Drift'e kaydet.
+      final int? savedSteps = _stepSensorReady
+          ? _walkingSteps
+          : null;
+
       await _walkingRepository.finishWalking(
         sessionId: _sessionId!,
         durationSeconds: durationSeconds,
         distanceMeters: _distanceMeters,
-
-        // Gerçek adım sayacı henüz entegre edilmedi.
-        stepCount: null,
+        stepCount: savedSteps,
       );
 
       _status = WalkingStatus.completed;
@@ -406,6 +552,10 @@ Future<void> startWalking() async {
     }
   }
 
+  // --------------------
+  // TEMİZLİK
+  // --------------------
+
   @override
   void dispose() {
     _disposed = true;
@@ -413,11 +563,19 @@ Future<void> startWalking() async {
     _stopTimer();
     _stopwatch.stop();
 
-    final subscription = _positionSubscription;
+    final locationSubscription =
+        _positionSubscription;
     _positionSubscription = null;
 
-    if (subscription != null) {
-      unawaited(subscription.cancel());
+    if (locationSubscription != null) {
+      unawaited(locationSubscription.cancel());
+    }
+
+    final stepSubscription = _stepSubscription;
+    _stepSubscription = null;
+
+    if (stepSubscription != null) {
+      unawaited(stepSubscription.cancel());
     }
 
     super.dispose();

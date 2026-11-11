@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../database/app_database.dart';
-
 import '../repositories/user_profile_repository.dart';
 import '../repositories/walking_repository.dart';
 
@@ -20,6 +19,7 @@ import '../screens/walking_map_screen.dart';
 import '../screens/walking_summary_screen.dart';
 import '../screens/step_goal_screen.dart';
 import '../screens/theme_settings_screen.dart';
+import '../screens/permission_settings_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
@@ -28,7 +28,6 @@ GoRouter createAppRouter(AppDatabase database) {
   return GoRouter(
     initialLocation: '/splash',
     routes: [
-      // Splash ekranı
       GoRoute(
         path: '/splash',
         builder: (context, state) => SplashScreen(
@@ -36,13 +35,12 @@ GoRouter createAppRouter(AppDatabase database) {
         ),
       ),
 
-      // Onboarding ekranı
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) =>
+            const OnboardingScreen(),
       ),
 
-      // İlk kurulum - kullanıcı bilgileri
       GoRoute(
         path: '/user-info',
         builder: (context, state) => UserInfoScreen(
@@ -50,7 +48,6 @@ GoRouter createAppRouter(AppDatabase database) {
         ),
       ),
 
-      // Profil üzerinden kişisel bilgileri düzenleme
       GoRoute(
         path: '/edit-profile',
         builder: (context, state) => UserInfoScreen(
@@ -59,13 +56,12 @@ GoRouter createAppRouter(AppDatabase database) {
         ),
       ),
 
-      // İzinler
       GoRoute(
         path: '/permissions',
-        builder: (context, state) => const PermissionsScreen(),
+        builder: (context, state) =>
+            const PermissionsScreen(),
       ),
 
-      // Alt navigasyonun bulunduğu ana ekranlar
       ShellRoute(
         builder: (context, state, child) {
           return MainShell(
@@ -85,6 +81,7 @@ GoRouter createAppRouter(AppDatabase database) {
             path: '/statistics',
             builder: (context, state) => StatisticsScreen(
               repository: walkingRepository,
+              profileRepository: profileRepository,
             ),
           ),
 
@@ -104,16 +101,14 @@ GoRouter createAppRouter(AppDatabase database) {
         ],
       ),
 
-      // Aktif yürüyüş ekranı
-      // Alt navigasyon görünmez.
       GoRoute(
         path: '/walking-map',
         builder: (context, state) => WalkingMapScreen(
           walkingRepository: walkingRepository,
+          profileRepository: profileRepository,
         ),
       ),
 
-      // Yürüyüş özeti
       GoRoute(
         path: '/walking-summary/:sessionId',
         builder: (context, state) {
@@ -134,26 +129,30 @@ GoRouter createAppRouter(AppDatabase database) {
         },
       ),
 
-      // Yürüyüş detayı - henüz geliştirilecek
       GoRoute(
         path: '/walking-detail',
-        builder: (context, state) => const _PlaceholderScreen(
+        builder: (context, state) =>
+            const _PlaceholderScreen(
           title: 'Yürüyüş Detayı',
         ),
       ),
 
-      // Adım hedefi - henüz geliştirilecek
       GoRoute(
-  path: '/step-goal',
-  builder: (context, state) => StepGoalScreen(
-    repository: profileRepository,
-  ),
-),
+        path: '/step-goal',
+        builder: (context, state) => StepGoalScreen(
+          repository: profileRepository,
+        ),
+      ),
 
-GoRoute(
-  path: '/theme-settings',
+      GoRoute(
+        path: '/theme-settings',
+        builder: (context, state) =>
+            const ThemeSettingsScreen(),
+      ),
+      GoRoute(
+  path: '/permission-settings',
   builder: (context, state) =>
-      const ThemeSettingsScreen(),
+      const PermissionSettingsScreen(),
 ),
     ],
   );

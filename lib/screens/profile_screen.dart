@@ -129,14 +129,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 32),
-Card(
-  color: theme.brightness == Brightness.light
-      ? Colors.white
-      : colors.surfaceContainerLow,
-  elevation: 0,
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(20),
-  ),
+
+            Card(
+              color: theme.brightness == Brightness.light
+                  ? Colors.white
+                  : colors.surfaceContainerLow,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Column(
                 children: [
                   _profileOption(
@@ -144,34 +145,44 @@ Card(
                     title: 'Kişisel Bilgiler',
                     subtitle: 'Boy, kilo ve diğer bilgiler',
                     onTap: () async {
-  final updated = await context.push<bool>('/edit-profile');
+                      final updated =
+                          await context.push<bool>('/edit-profile');
 
-  if (!mounted) return;
+                      if (!mounted) return;
 
-  if (updated == true) {
-    await _loadProfile();
-  }
-},
+                      if (updated == true) {
+                        await _loadProfile();
+                      }
+                    },
                   ),
 
-                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                  ),
 
                   _profileOption(
                     icon: Icons.track_changes_rounded,
                     title: 'Adım Hedefi',
                     subtitle: goalText,
-                   onTap: () async {
-  final updated = await context.push<bool>('/step-goal');
+                    onTap: () async {
+                      final updated =
+                          await context.push<bool>('/step-goal');
 
-  if (!mounted) return;
+                      if (!mounted) return;
 
-  if (updated == true) {
-    await _loadProfile();
-  }
-},
+                      if (updated == true) {
+                        await _loadProfile();
+                      }
+                    },
                   ),
 
-                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                  ),
 
                   _profileOption(
                     icon: Icons.notifications_none_rounded,
@@ -184,28 +195,36 @@ Card(
                     },
                   ),
 
-                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                  ),
 
+                  // Veri Senkronizasyonu yerine bu seçenek geldi.
                   _profileOption(
-                    icon: Icons.sync_rounded,
-                    title: 'Veri Senkronizasyonu',
-                    subtitle: 'Health Connect / Apple Health',
+                    icon: Icons.admin_panel_settings_outlined,
+                    title: 'İzin Yönetimi',
+                    subtitle:
+                        'Konum, hareket ve sağlık izinleri',
                     onTap: () {
-                      _showMessage(
-                        'Sağlık verisi bağlantısı henüz hazırlanmadı.',
-                      );
+                      context.push('/permission-settings');
                     },
                   ),
 
-                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  const Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                  ),
 
                   _profileOption(
                     icon: Icons.brightness_6_outlined,
                     title: 'Tema',
-                    subtitle: 'Sistem ayarı',
-                  onTap: () {
-  context.push('/theme-settings');
-},
+                    subtitle: 'Görünüm ayarları',
+                    onTap: () {
+                      context.push('/theme-settings');
+                    },
                   ),
                 ],
               ),

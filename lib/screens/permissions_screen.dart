@@ -1,34 +1,32 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:geolocator/geolocator.dart';
+
 import '../services/onboarding_status_service.dart';
+import '../services/step_service.dart';
+
 class PermissionsScreen extends StatefulWidget {
   const PermissionsScreen({super.key});
 
   @override
-  State<PermissionsScreen> createState() =>
-      _PermissionsScreenState();
+  State<PermissionsScreen> createState() => _PermissionsScreenState();
 }
 
 class _PermissionsScreenState extends State<PermissionsScreen>
     with WidgetsBindingObserver {
-  bool _activityGranted = false;
+  final _onboardingStatus = OnboardingStatusService();
+  final _stepService = StepService();
+  bool _motionGranted = false;
   bool _locationGranted = false;
-  bool _isLoading = false;
+  bool _healthRequested = false;
+  bool _isBusy = false;
 
-  bool get _isAndroid =>
-      !kIsWeb &&
-      defaultTargetPlatform == TargetPlatform.android;
-
-  bool get _isIOS =>
-      !kIsWeb &&
-      defaultTargetPlatform == TargetPlatform.iOS;
-
-  final OnboardingStatusService _onboardingStatus =
-    OnboardingStatusService();
+  bool get _isAndroid => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  bool get _isIOS => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+  bool get _isMobile => _isAndroid || _isIOS;
+  Permission get _motionPermission => _isIOS ? Permission.sensors : Permission.activityRecognition;
 
   @override
   void initState() {
@@ -39,247 +37,149 @@ class _PermissionsScreenState extends State<PermissionsScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _checkPermissions();
-    }
+    if (state == AppLifecycleState.resumed) _checkPermissions();
   }
 
   Future<void> _checkPermissions() async {
-    if (!_isAndroid && !_isIOS) return;
-
+    if (!_isMobile) return;
     try {
+      final motion = await _motionPermission.status;
       final location = await Geolocator.checkPermission();
-
-      bool activityGranted = false;
-
-      if (_isAndroid) {
-        final status =
-            await Permission.activityRecognition.status;
-
-        activityGranted = status.isGranted;
-      }
-
       if (!mounted) return;
-
       setState(() {
-        _locationGranted =
-            location == LocationPermission.whileInUse ||
+        _motionGranted = motion.isGranted;
+        _locationGranted = location == LocationPermission.whileInUse ||
             location == LocationPermission.always;
-
-        _activityGranted = activityGranted;
       });
-    } catch (_) {
-      _showMessage('İzin durumları kontrol edilemedi.');
+    } catch (e) {
+      debugPrint('İzin kontrol hatası: $e');
     }
   }
 
-  Future<void> _requestActivityPermission() async {
-    if (!_isAndroid) return;
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
 
+  Future<void> _requestMotion() async {
+    if (!_isMobile) return;
     try {
-      final status =
-          await Permission.activityRecognition.request();
-
-      if (!mounted) return;
-
-      setState(() {
-        _activityGranted = status.isGranted;
-      });
-
-      if (status.isPermanentlyDenied) {
-        _showMessage(
-          'Aktivite iznini cihaz ayarlarından açabilirsin.',
-        );
+      var status = await _motionPermission.status;
+      if (!status.isGranted && !status.isPermanentlyDenied) {
+        status = await _motionPermission.request();
       }
-    } catch (_) {
-      _showMessage('Aktivite izni istenemedi.');
+      if (!mounted) return;
+      setState(() => _motionGranted = status.isGranted);
+      if (status.isPermanentlyDenied) {
+        _showMessage('Hareket iznini telefon ayarlarından açabilirsin.');
+      }
+    } catch (e) {
+      debugPrint('Hareket izni hatası: $e');
+      _showMessage('Hareket ve Fitness izni istenemedi.');
     }
   }
 
-  Future<void> _requestLocationPermission() async {
-    if (!_isAndroid && !_isIOS) return;
-
+  Future<void> _requestLocation() async {
+    if (!_isMobile) return;
     try {
-      final serviceEnabled =
-          await Geolocator.isLocationServiceEnabled();
-
-      if (!serviceEnabled) {
-        _showMessage('Telefonunun konum servisi kapalı.');
-        await Geolocator.openLocationSettings();
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        _showMessage('Konum servisleri kapalı. Telefon ayarlarından açabilirsin.');
         return;
       }
-
       var permission = await Geolocator.checkPermission();
-
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-
       if (!mounted) return;
-
-      if (permission == LocationPermission.deniedForever) {
-        _showMessage(
-          'Konum izni cihaz ayarlarından açılmalı.',
-        );
-
-        await Geolocator.openAppSettings();
-        return;
-      }
-
       setState(() {
-        _locationGranted =
-            permission == LocationPermission.whileInUse ||
+        _locationGranted = permission == LocationPermission.whileInUse ||
             permission == LocationPermission.always;
       });
-    } catch (_) {
+      if (permission == LocationPermission.deniedForever) {
+        _showMessage('Konum iznini telefon ayarlarından açabilirsin.');
+      }
+    } catch (e) {
+      debugPrint('Konum izni hatası: $e');
       _showMessage('Konum izni istenemedi.');
     }
   }
 
-  
-Future<void> _requestAndContinue() async {
-  if (_isLoading) return;
-
-  setState(() => _isLoading = true);
-
-  try {
-    // Android aktivite izni
-    if (_isAndroid && !_activityGranted) {
-      await _requestActivityPermission();
-    }
-
-    // Android ve iOS konum izni
-    if ((_isAndroid || _isIOS) && !_locationGranted) {
-      await _requestLocationPermission();
-    }
-
-    if (!mounted) return;
-
-    // Kullanıcı izin vermese bile kurulum aşamasını
-    // tamamlamayı seçebilir.
-    await _onboardingStatus.markCompleted();
-
-    if (!mounted) return;
-
-    // Artık sonraki açılışlarda Splash,
-    // kullanıcıyı doğrudan ana sayfaya yönlendirebilir.
-    context.go('/home');
-  } catch (_) {
-    if (!mounted) return;
-
-    _showMessage(
-      'Kurulum durumu kaydedilemedi. Tekrar deneyin.',
-    );
-  } finally {
-    if (mounted) {
-      setState(() => _isLoading = false);
+  Future<void> _requestHealth() async {
+    if (!_isMobile) return;
+    try {
+      await _stepService.requestStepPermission();
+      if (!mounted) return;
+      // iOS HealthKit okuma izni kesin olarak sorgulanamaz.
+      // Bu yalnızca isteğin yapıldığını gösterir; izin verildiğini değil.
+      setState(() => _healthRequested = true);
+    } catch (e) {
+      debugPrint('Sağlık izni hatası: $e');
+      _showMessage('Sağlık izni istenemedi.');
     }
   }
-}
 
-
-  void _showMessage(String message) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  Future<void> _requestAndContinue() async {
+    if (_isBusy) return;
+    setState(() => _isBusy = true);
+    try {
+      if (_isMobile && !_motionGranted) await _requestMotion();
+      if (!mounted) return;
+      if (_isMobile && !_locationGranted) await _requestLocation();
+      if (!mounted) return;
+      if (_isMobile && !_healthRequested) await _requestHealth();
+      if (!mounted) return;
+      // İzin reddedilse de onboarding tamamlanabilir.
+      await _onboardingStatus.markCompleted();
+      if (!mounted) return;
+      context.go('/home');
+    } catch (e) {
+      debugPrint('Onboarding hatası: $e');
+      _showMessage('Kurulum tamamlanamadı. Tekrar deneyebilirsin.');
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
   }
 
   Widget _permissionCard({
     required IconData icon,
     required String title,
     required String description,
-    required bool granted,
+    required String statusLabel,
+    required bool done,
     required VoidCallback onTap,
-    bool pendingIntegration = false,
   }) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Material(
-      color: isDark ? colors.surface : Colors.white,
-      borderRadius: BorderRadius.circular(20),
+    return Card(
+      elevation: 0,
+      color: colors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 19,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.35),
-            ),
-            boxShadow: isDark
-                ? []
-                : [
-                    BoxShadow(
-                      color: const Color(0xFF7698A8)
-                          .withValues(alpha: 0.08),
-                      blurRadius: 18,
-                      offset: const Offset(0, 7),
-                    ),
-                  ],
-          ),
+        onTap: _isBusy ? null : onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
           child: Row(
             children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 29,
-                  color: colors.primary,
-                ),
+              CircleAvatar(
+                backgroundColor: const Color(0xFFEE846F).withValues(alpha: 0.12),
+                child: Icon(icon, color: const Color(0xFFEE846F)),
               ),
-
               const SizedBox(width: 14),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
+                    Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 5),
-
-                    Text(
-                      description,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                        height: 1.4,
-                      ),
-                    ),
+                    Text(description, style: theme.textTheme.bodySmall),
+                    const SizedBox(height: 6),
+                    Text(statusLabel, style: theme.textTheme.labelSmall?.copyWith(color: colors.primary)),
                   ],
                 ),
               ),
-
-              const SizedBox(width: 10),
-
-              Icon(
-                granted
-                    ? Icons.check_circle_rounded
-                    : pendingIntegration
-                        ? Icons.info_outline_rounded
-                        : Icons.circle_outlined,
-                color: granted
-                    ? colors.secondary
-                    : colors.onSurfaceVariant,
-                size: 25,
-              ),
+              Icon(done ? Icons.check_circle_outline : Icons.chevron_right,
+                  color: done ? const Color(0xFF65A7C1) : colors.onSurfaceVariant),
             ],
           ),
         ),
@@ -296,119 +196,61 @@ Future<void> _requestAndContinue() async {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor:
-          isDark ? colors.surface : const Color(0xFFF9FBFD),
-
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
           child: Column(
             children: [
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 50),
-
-                      Text(
-                        'Gerekli İzinler',
-                        textAlign: TextAlign.center,
-                        style:
-                            theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      Text(
-                        'Adım ve yürüyüş verilerini takip '
-                        'edebilmemiz için izinlerine '
-                        'ihtiyacımız var.',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colors.onSurfaceVariant,
-                          height: 1.5,
-                        ),
-                      ),
-
-                      const SizedBox(height: 34),
-
-                      _permissionCard(
-                        icon: Icons.favorite_rounded,
-                        title: 'Aktivite Verileri',
-                        description:
-                            'Günlük adım ve hareket verilerini '
-                            'okumamızı sağlar.',
-                        granted: _activityGranted,
-                        pendingIntegration: !_isAndroid,
-                        onTap: () {
-                          if (_isAndroid) {
-                            _requestActivityPermission();
-                          } else {
-                            _showMessage(
-                              'iOS hareket verisi izni, '
-                              'adım takip servisine '
-                              'bağlandığında istenecek.',
-                            );
-                          }
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      _permissionCard(
-                        icon: Icons.location_on_rounded,
-                        title: 'Konum',
-                        description:
-                            'Yürüyüş sırasında rotanı '
-                            'kaydetmemizi sağlar.',
-                        granted: _locationGranted,
-                        onTap: _requestLocationPermission,
-                      ),
-                    ],
-                  ),
+                child: ListView(
+                  children: [
+                    const SizedBox(height: 28),
+                    Text('Uygulama İzinleri', textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    Text('Adımlarını ve yürüyüşlerini takip etmek için aşağıdaki izinleri kullanıyoruz. İzinler isteğe bağlıdır.',
+                        textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 30),
+                    _permissionCard(
+                      icon: Icons.directions_walk_rounded,
+                      title: 'Hareket ve Fitness',
+                      description: 'Aktif yürüyüş sırasında telefonun adım sensörünü kullanır.',
+                      statusLabel: _motionGranted ? 'İzin verildi' : 'İzin verilmedi',
+                      done: _motionGranted,
+                      onTap: _requestMotion,
+                    ),
+                    const SizedBox(height: 12),
+                    _permissionCard(
+                      icon: Icons.location_on_rounded,
+                      title: 'Konum',
+                      description: 'Yürüyüş rotasını ve GPS mesafesini kaydeder.',
+                      statusLabel: _locationGranted ? 'İzin verildi' : 'İzin verilmedi',
+                      done: _locationGranted,
+                      onTap: _requestLocation,
+                    ),
+                    const SizedBox(height: 12),
+                    _permissionCard(
+                      icon: Icons.favorite_border_rounded,
+                      title: 'Sağlık Verileri',
+                      description: 'Apple Health veya Health Connect üzerinden günlük ve geçmiş adımları okur.',
+                      statusLabel: _healthRequested ? 'İzin isteği yapıldı' : 'İzin isteği yapılmadı',
+                      done: _healthRequested,
+                      onTap: _requestHealth,
+                    ),
+                  ],
                 ),
               ),
-
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: 12,
-                  bottom: 16,
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: FilledButton(
-                    onPressed:
-                        _isLoading ? null : _requestAndContinue,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      foregroundColor: colors.onPrimary,
-                      elevation: 0,
-                      shape: const StadiumBorder(),
-                    ),
-                    child: _isLoading
-                        ? SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colors.onPrimary,
-                            ),
-                          )
-                        : const Text(
-                            'İzin Ver ve Devam Et',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                          ),
-                  ),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton(
+                  onPressed: _isBusy ? null : _requestAndContinue,
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFEE846F), foregroundColor: Colors.white),
+                  child: _isBusy
+                      ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Devam Et'),
                 ),
               ),
             ],

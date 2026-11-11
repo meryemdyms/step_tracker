@@ -5,15 +5,19 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../controllers/walking_controller.dart';
+import '../repositories/user_profile_repository.dart';
 import '../repositories/walking_repository.dart';
+import '../services/activity_calculation_service.dart';
 import '../services/location_service.dart';
 
 class WalkingMapScreen extends StatefulWidget {
   final WalkingRepository walkingRepository;
+  final UserProfileRepository profileRepository;
 
   const WalkingMapScreen({
     super.key,
     required this.walkingRepository,
+    required this.profileRepository,
   });
 
   @override
@@ -27,12 +31,16 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
   final PageController _pageController = PageController();
   final MapController _mapController = MapController();
 
+  final ActivityCalculationService _calculations =
+      const ActivityCalculationService();
+
   int _pageIndex = 0;
 
   bool _mapReady = false;
   bool _followScheduled = false;
 
   LatLng? _lastMapCenter;
+  double? _weightKg;
 
   static const Color _coral = Color(0xFFEE846F);
   static const Color _blue = Color(0xFF65A7C1);
@@ -46,15 +54,41 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
       widget.walkingRepository,
     );
 
-    // Yeni GPS koordinatlarını haritada takip et.
     _controller.addListener(_followCurrentLocation);
 
-    // Ana sayfadan açılınca yürüyüş otomatik başlar.
+    _loadUserWeight();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _controller.startWalking();
       }
     });
+  }
+
+  Future<void> _loadUserWeight() async {
+    try {
+      final profile =
+          await widget.profileRepository.getProfile();
+
+      if (!mounted) return;
+
+      setState(() {
+        final weight = profile?.weightKg;
+        _weightKg =
+            weight != null && weight > 0 ? weight : null;
+      });
+    } catch (e) {
+      debugPrint('Kullanıcı kilosu okunamadı: $e');
+    }
+  }
+
+  int? get _walkingCalories {
+    if (_weightKg == null) return null;
+
+    return _calculations.walkingCalories(
+      distanceMeters: _controller.distanceMeters,
+      weightKg: _weightKg!,
+    ).round();
   }
 
   String _formatDuration(int seconds) {
@@ -87,14 +121,11 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
 
     final speed = kilometers / hours;
 
-    if (!speed.isFinite) {
-      return '—';
-    }
+    if (!speed.isFinite) return '—';
 
     return speed.toStringAsFixed(1).replaceAll('.', ',');
   }
 
-  // GPS verisi geldikçe haritayı son konuma taşır.
   void _followCurrentLocation() {
     if (!mounted ||
         !_mapReady ||
@@ -105,56 +136,43 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
 
     final positions = _controller.routePositions;
 
-    if (positions.isEmpty) {
-      return;
-    }
+    if (positions.isEmpty) return;
 
     final last = positions.last;
-
     final nextCenter = LatLng(
       last.latitude,
       last.longitude,
     );
 
-    if (_lastMapCenter == nextCenter) {
-      return;
-    }
+    if (_lastMapCenter == nextCenter) return;
 
     _followScheduled = true;
 
-    // MapController.move() build sırasında çağrılmasın.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _followScheduled = false;
 
-      if (!mounted ||
-          !_mapReady ||
-          _pageIndex != 1) {
+      if (!mounted || !_mapReady || _pageIndex != 1) {
         return;
       }
 
-      final latestPositions = _controller.routePositions;
+      final latest = _controller.routePositions;
 
-      if (latestPositions.isEmpty) {
-        return;
-      }
+      if (latest.isEmpty) return;
 
-      final latest = latestPositions.last;
+      final position = latest.last;
 
       final center = LatLng(
-        latest.latitude,
-        latest.longitude,
+        position.latitude,
+        position.longitude,
       );
 
-      if (_lastMapCenter == center) {
-        return;
-      }
+      if (_lastMapCenter == center) return;
 
       _mapController.move(center, 16);
       _lastMapCenter = center;
     });
   }
 
-  // Yürüyüşü tamamla ve özet ekranına geç.
   Future<void> _finishWalking() async {
     await _controller.finishWalking();
 
@@ -184,12 +202,11 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
     required String label,
   }) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -225,7 +242,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
     );
   }
 
-  // Yalnızca ilk sayfada gösterilen kontrol butonları.
   Widget _walkingControls() {
     final status = _controller.status;
     final busy = _controller.isBusy;
@@ -252,7 +268,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Duraklat / Devam Et
         IconButton.filled(
           onPressed: busy
               ? null
@@ -274,7 +289,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
 
         const SizedBox(width: 18),
 
-        // Yürüyüşü Bitir
         IconButton.outlined(
           onPressed: busy ? null : _finishWalking,
           icon: const Icon(Icons.stop_rounded),
@@ -288,7 +302,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
     );
   }
 
-  // SAYFA 1: Aktif yürüyüş
   Widget _walkingDashboard() {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
@@ -301,12 +314,12 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            24, 12, 24, 20,
-          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: constraints.maxHeight - 32,
+              minHeight: constraints.maxHeight > 32
+                  ? constraints.maxHeight - 32
+                  : 0,
             ),
             child: Column(
               children: [
@@ -327,7 +340,7 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                       ? 'Yürüyüş duraklatıldı'
                       : status == WalkingStatus.active
                           ? 'Yürüyüş devam ediyor'
-                          : 'GPS hazırlanıyor',
+                          : 'Yürüyüş hazırlanıyor',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
@@ -345,7 +358,9 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                   children: [
                     _metricCard(
                       icon: Icons.directions_walk_rounded,
-                      value: '—',
+                      value: _controller.stepSensorReady
+                          ? '${_controller.walkingSteps}'
+                          : '—',
                       label: 'Adım',
                     ),
 
@@ -356,9 +371,12 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                     ),
 
                     _metricCard(
-                      icon: Icons.local_fire_department_rounded,
-                      value: '—',
-                      label: 'Kalori',
+                      icon:
+                          Icons.local_fire_department_rounded,
+                      value: _walkingCalories == null
+                          ? '—'
+                          : '$_walkingCalories kcal',
+                      label: 'Tahmini Kalori',
                     ),
 
                     _metricCard(
@@ -385,9 +403,7 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                       size: 18,
                       color: colors.onSurfaceVariant,
                     ),
-
                     const SizedBox(width: 8),
-
                     Text(
                       'Canlı haritayı görmek için kaydır',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -396,6 +412,17 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                     ),
                   ],
                 ),
+
+                if (_controller.stepError != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _controller.stepError!,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.error,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -404,31 +431,26 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
     );
   }
 
-  // SAYFA 2: Canlı GPS haritası
   Widget _mapView() {
     final positions = _controller.routePositions;
 
-    final points = positions
-        .map(
-          (position) => LatLng(
-            position.latitude,
-            position.longitude,
-          ),
-        )
-        .toList();
+    final points = positions.map(
+      (position) => LatLng(
+        position.latitude,
+        position.longitude,
+      ),
+    ).toList();
 
     final hasLocation = points.isNotEmpty;
 
-    // GPS henüz gelmediyse harita nötr merkezde açılır.
-    // Bu koordinat kullanıcının konumu değildir.
+    // Yalnızca haritanın başlangıç merkezi.
+    // Gerçek kullanıcı konumu olarak gösterilmez.
     final center = hasLocation
         ? points.last
         : const LatLng(39.0, 35.0);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        18, 12, 18, 20,
-      ),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
       child: Column(
         children: [
           Expanded(
@@ -443,8 +465,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                       initialZoom: hasLocation ? 16 : 5,
                       onMapReady: () {
                         _mapReady = true;
-
-                        // İlk konum alınmışsa hemen odaklan.
                         _followCurrentLocation();
                       },
                     ),
@@ -457,7 +477,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                             'com.example.adim_takip',
                       ),
 
-                      // Kullanıcının yürüdüğü GPS rotası.
                       if (points.length > 1)
                         PolylineLayer(
                           polylines: [
@@ -469,7 +488,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                           ],
                         ),
 
-                      // En son kaydedilen GPS konumu.
                       if (hasLocation)
                         MarkerLayer(
                           markers: [
@@ -494,7 +512,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                     ],
                   ),
 
-                  // GPS henüz konum üretmediyse bilgi ver.
                   if (!hasLocation)
                     Positioned(
                       top: 16,
@@ -520,7 +537,7 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
 
           const SizedBox(height: 20),
 
-          // Haritada kontrol butonları bulunmaz.
+          // Harita sayfasında kontrol butonları yok.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -528,14 +545,12 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                 'Mesafe',
                 '${_distanceText()} km',
               ),
-
               _mapMetric(
                 'Süre',
                 _formatDuration(
                   _controller.durationSeconds,
                 ),
               ),
-
               _mapMetric(
                 'Ort. Hız',
                 _speedText() == '—'
@@ -574,7 +589,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
   @override
   void dispose() {
     _controller.removeListener(_followCurrentLocation);
-
     _pageController.dispose();
     _mapController.dispose();
     _controller.dispose();
@@ -600,7 +614,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
           canPop: canLeave,
           child: Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
-
             appBar: AppBar(
               centerTitle: true,
               title: Text(
@@ -645,7 +658,6 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                     ),
                   ),
 
-                  // Kaydırılabilir iki sayfanın göstergesi.
                   Padding(
                     padding: const EdgeInsets.only(
                       top: 4,
@@ -657,9 +669,8 @@ class _WalkingMapScreenState extends State<WalkingMapScreen> {
                         final selected = index == _pageIndex;
 
                         return AnimatedContainer(
-                          duration: const Duration(
-                            milliseconds: 180,
-                          ),
+                          duration:
+                              const Duration(milliseconds: 180),
                           margin: const EdgeInsets.symmetric(
                             horizontal: 4,
                           ),
