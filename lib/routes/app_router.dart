@@ -18,6 +18,7 @@ import '../screens/history_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/walking_map_screen.dart';
 import '../screens/walking_summary_screen.dart';
+import '../screens/step_goal_screen.dart';
 
 GoRouter createAppRouter(AppDatabase database) {
   final profileRepository = UserProfileRepository(database);
@@ -142,11 +143,11 @@ GoRouter createAppRouter(AppDatabase database) {
 
       // Adım hedefi - henüz geliştirilecek
       GoRoute(
-        path: '/step-goal',
-        builder: (context, state) => const _PlaceholderScreen(
-          title: 'Adım Hedefi',
-        ),
-      ),
+  path: '/step-goal',
+  builder: (context, state) => StepGoalScreen(
+    repository: profileRepository,
+  ),
+),
     ],
   );
 }

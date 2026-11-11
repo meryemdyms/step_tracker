@@ -41,4 +41,27 @@ class UserProfileRepository {
 
     return existingProfile.id;
   }
+
+  // Yalnızca günlük adım hedefini günceller.
+  Future<void> updateStepGoal(int dailyStepGoal) async {
+    if (dailyStepGoal < 100 || dailyStepGoal > 100000) {
+      throw ArgumentError(
+        'Günlük adım hedefi 100 ile 100000 arasında olmalıdır.',
+      );
+    }
+
+    final profile = await getProfile();
+
+    if (profile == null) {
+      throw StateError('Kullanıcı profili bulunamadı.');
+    }
+
+    await (_database.update(_database.userProfiles)
+          ..where((table) => table.id.equals(profile.id)))
+        .write(
+      UserProfilesCompanion(
+        dailyStepGoal: Value(dailyStepGoal),
+      ),
+    );
+  }
 }

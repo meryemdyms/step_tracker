@@ -160,9 +160,15 @@ Card(
                     icon: Icons.track_changes_rounded,
                     title: 'Adım Hedefi',
                     subtitle: goalText,
-                    onTap: () {
-                      context.push('/step-goal');
-                    },
+                   onTap: () async {
+  final updated = await context.push<bool>('/step-goal');
+
+  if (!mounted) return;
+
+  if (updated == true) {
+    await _loadProfile();
+  }
+},
                   ),
 
                   const Divider(height: 1, indent: 16, endIndent: 16),
