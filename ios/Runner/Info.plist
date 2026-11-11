@@ -2,11 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
 <key>NSLocationWhenInUseUsageDescription</key>
 <string>Yürüyüş sırasında rotanızı haritada göstermek için konumunuza erişiyoruz.</string>
 
 <key>NSMotionUsageDescription</key>
 <string>Günlük adımlarınızı takip edebilmek için hareket verilerinize erişiyoruz.</string>
+
+<key>NSHealthShareUsageDescription</key>
+<string>Günlük ve geçmiş adım verilerinizi Apple Health üzerinden okumak için izninize ihtiyacımız var.</string>
+
+<key>NSHealthUpdateUsageDescription</key>
+<string>İleride desteklenen yürüyüş verilerini Apple Health ile paylaşabilmek için izninizi istiyoruz.</string>
+
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
