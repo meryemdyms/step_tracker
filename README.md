@@ -1,68 +1,68 @@
 # StepPulse
 
-**StepPulse** is a cross-platform step tracking and walking activity application built with Flutter for Android and iOS.
+**StepPulse**, Android ve iOS için Flutter ile geliştirilmiş, çapraz platformlu bir adım sayma ve yürüyüş aktivitesi uygulamasıdır.
 
-The application helps users monitor their daily physical activity, track walking sessions, set personal step goals, and review their progress through a simple and intuitive interface.
+Uygulama, kullanıcıların günlük fiziksel aktivitelerini takip etmelerine, yürüyüş seanslarını kaydetmelerine, kişisel adım hedefleri belirlemelerine ve ilerlemelerini sade ve kullanımı kolay bir arayüz üzerinden incelemelerine yardımcı olur.
 
-StepPulse focuses on providing an accessible walking experience without requiring a smartwatch or additional wearable devices.
+StepPulse, akıllı saat veya ek giyilebilir cihaz gerektirmeden erişilebilir bir yürüyüş deneyimi sunmaya odaklanır.
 
-## Features
+## Özellikler
 
-### Step Tracking
-- Daily step count monitoring
-- Customizable daily step goals
-- Visual goal progress indicator
-- Estimated calorie and distance information
-- Integration with supported device health data
+### Adım Takibi
+- Günlük adım sayısı takibi
+- Özelleştirilebilir günlük adım hedefleri
+- Görsel hedef ilerleme göstergesi
+- Tahmini kalori ve mesafe bilgisi
+- Desteklenen cihaz sağlık verileriyle entegrasyon
 
-### Walking Activity
-- GPS-based walking session tracking
-- Walking route visualization on an interactive map
-- Start and stop walking sessions
-- Walking duration and distance tracking
-- Walking activity history
+### Yürüyüş Aktivitesi
+- GPS tabanlı yürüyüş seansı takibi
+- Etkileşimli harita üzerinde yürüyüş rotası görselleştirme
+- Yürüyüş seanslarını başlatma ve durdurma
+- Yürüyüş süresi ve mesafe takibi
+- Yürüyüş aktivite geçmişi
 
-### Activity Statistics
-- Daily activity overview
-- Weekly activity statistics
-- Monthly activity statistics
-- Historical step data visualization
+### Aktivite İstatistikleri
+- Günlük aktivite özeti
+- Haftalık aktivite istatistikleri
+- Aylık aktivite istatistikleri
+- Geçmiş adım verilerinin görselleştirilmesi
 
-### Personal Profile
-- Personal information management
-- Height, weight, and age information
-- Custom daily step targets
-- Application preferences
+### Kişisel Profil
+- Kişisel bilgi yönetimi
+- Boy, kilo ve yaş bilgileri
+- Özel günlük adım hedefleri
+- Uygulama tercihleri
 
-### Notifications
-- Daily walking reminders
-- Configurable reminder times
-- Daily step goal completion notifications
-- Notification permission management
+### Bildirimler
+- Günlük yürüyüş hatırlatıcıları
+- Yapılandırılabilir hatırlatma saatleri
+- Günlük adım hedefi tamamlama bildirimleri
+- Bildirim izni yönetimi
 
-### Appearance
-- Light and dark theme support
-- Custom application icon and splash screen
-- Responsive Flutter interface
+### Görünüm
+- Açık ve koyu tema desteği
+- Özel uygulama ikonu ve açılış ekranı (splash screen)
+- Duyarlı (responsive) Flutter arayüzü
 
-## Tech Stack
+## Teknoloji Yığını
 
-| Technology | Purpose |
+| Teknoloji | Amaç |
 |---|---|
-| Flutter & Dart | Cross-platform mobile development |
-| Drift (SQLite) | Local data persistence |
-| Health | HealthKit and Health Connect integration |
-| Pedometer | Device step sensor integration |
-| Geolocator | GPS location tracking |
-| Flutter Map | Interactive map visualization |
-| GoRouter | Navigation and routing |
-| SharedPreferences | User settings and preferences |
-| Flutter Local Notifications | Local notifications |
-| Timezone | Timezone-aware scheduling |
+| Flutter & Dart | Çapraz platformlu mobil geliştirme |
+| Drift (SQLite) | Yerel veri saklama |
+| Health | HealthKit ve Health Connect entegrasyonu |
+| Pedometer | Cihaz adım sensörü entegrasyonu |
+| Geolocator | GPS konum takibi |
+| Flutter Map | Etkileşimli harita görselleştirme |
+| GoRouter | Navigasyon ve yönlendirme |
+| SharedPreferences | Kullanıcı ayarları ve tercihleri |
+| Flutter Local Notifications | Yerel bildirimler |
+| Timezone | Saat dilimine duyarlı zamanlama |
 
-## Architecture
+## Mimari
 
-StepPulse follows a modular Flutter project structure with separated responsibilities.
+StepPulse, sorumlulukların ayrıldığı modüler bir Flutter proje yapısını takip eder.
 
 ```text
 lib/
@@ -76,98 +76,98 @@ lib/
 └── main.dart
 ```
 
-The application separates user interface components, navigation, data access, and platform-related services to improve maintainability and readability.
+Uygulama; kullanıcı arayüzü bileşenlerini, navigasyonu, veri erişimini ve platforma özgü servisleri birbirinden ayırarak sürdürülebilirliği ve okunabilirliği artırır.
 
-### Data Management
+### Veri Yönetimi
 
-StepPulse uses a hybrid approach to step tracking:
+StepPulse, adım takibi için hibrit bir yaklaşım kullanır:
 
-- Device sensors provide step information when supported.
-- Platform health services provide access to available historical activity data.
-- Drift manages local application data.
-- SharedPreferences stores lightweight preferences and settings.
+- Cihaz sensörleri, desteklendiği durumlarda adım bilgisi sağlar.
+- Platform sağlık servisleri, mevcut geçmiş aktivite verilerine erişim sağlar.
+- Drift, yerel uygulama verilerini yönetir.
+- SharedPreferences, hafif tercihleri ve ayarları saklar.
 
-Health data availability depends on device support, permissions, and platform restrictions.
+Sağlık verilerinin kullanılabilirliği; cihaz desteğine, izinlere ve platform kısıtlamalarına bağlıdır.
 
-## Getting Started
+## Başlarken
 
-### Prerequisites
+### Gereksinimler
 
 - Flutter SDK
 - Dart SDK
-- Android Studio or Visual Studio Code
-- Xcode for iOS development
-- Android emulator or physical device / iOS simulator or physical iPhone
+- Android Studio veya Visual Studio Code
+- iOS geliştirme için Xcode
+- Android emülatörü veya fiziksel cihaz / iOS simülatörü veya fiziksel iPhone
 
-### Installation
+### Kurulum
 
-Clone the repository:
+Depoyu klonlayın:
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
 cd YOUR_REPOSITORY
 ```
 
-Install dependencies:
+Bağımlılıkları yükleyin:
 
 ```bash
 flutter pub get
 ```
 
-Generate required files:
+Gerekli dosyaları oluşturun:
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-Run the application:
+Uygulamayı çalıştırın:
 
 ```bash
 flutter run
 ```
 
-For a release build on a connected iPhone:
+Bağlı bir iPhone üzerinde release derlemesi için:
 
 ```bash
 flutter run --release
 ```
 
-## Permissions
+## İzinler
 
-Depending on the platform and enabled features, StepPulse may request:
+Platforma ve etkinleştirilen özelliklere bağlı olarak StepPulse şu izinleri isteyebilir:
 
-- Physical activity or motion permissions
-- Location permissions for walking routes
-- Health data read permissions
-- Notification permissions
+- Fiziksel aktivite veya hareket izinleri
+- Yürüyüş rotaları için konum izinleri
+- Sağlık verisi okuma izinleri
+- Bildirim izinleri
 
-Health service integration is optional where supported. Some functionality may depend on permission availability.
+Sağlık servisi entegrasyonu, desteklenen yerlerde isteğe bağlıdır. Bazı işlevler izinlerin kullanılabilirliğine bağlı olabilir.
 
-## Project Status
+## Proje Durumu
 
-StepPulse is currently under active development.
+StepPulse şu anda aktif geliştirme aşamasındadır.
 
-### Planned Improvements
+### Planlanan İyileştirmeler
 
-- Personalized step goal recommendations
-- More detailed activity insights
-- Improved walking habit tracking
-- Additional activity progress summaries
-- Enhanced background activity handling
+- Kişiselleştirilmiş adım hedefi önerileri
+- Daha ayrıntılı aktivite içgörüleri
+- Geliştirilmiş yürüyüş alışkanlığı takibi
+- Ek aktivite ilerleme özetleri
+- Gelişmiş arka plan aktivite yönetimi
 
-## Platform Support
+## Platform Desteği
 
-| Platform | Target |
+| Platform | Hedef |
 |---|---|
-| Android | Supported development target |
-| iOS | Supported development target |
-| Web | Not targeted |
-| macOS | Not targeted for production |
+| Android | Desteklenen geliştirme hedefi |
+| iOS | Desteklenen geliştirme hedefi |
+| Web | Hedeflenmiyor |
+| macOS | Üretim için hedeflenmiyor |
 
-## License
+## Lisans
 
-No open-source license has been specified for this project.
+Bu proje için herhangi bir açık kaynak lisansı belirtilmemiştir.
 
 ---
 
-Developed with Flutter and Dart.
+Flutter ve Dart ile geliştirilmiştir.
