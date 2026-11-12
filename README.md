@@ -1,22 +1,22 @@
 
 # StepPulse – Adım Takip ve Yürüyüş Uygulaması
 
-StepPulse, Flutter ve Dart kullanılarak Android ve iOS platformları için geliştirilen bir adım takip ve yürüyüş aktivitesi uygulamasıdır.
+StepPulse, Flutter ve Dart kullanılarak Android ve iOS platformları için geliştirilen, günlük adım takibi ve yürüyüş aktivitelerini tek platformda birleştiren bir mobil uygulamadır.
 
-Uygulama; kullanıcıların günlük adım sayılarını takip etmelerini, yürüyüş aktivitelerini kaydetmelerini, kişisel hedefler oluşturmalarını ve fiziksel aktivite geçmişlerini incelemelerini sağlar.
+Uygulama; kullanıcıların günlük adım sayılarını takip etmelerini, yürüyüş aktivitelerini kaydetmelerini, kişisel hedefler belirlemelerini ve fiziksel aktivite geçmişlerini incelemelerini sağlar.
 
-StepPulse'ın temel amacı, ek bir akıllı saat veya giyilebilir cihaz zorunluluğu olmadan, kullanıcıların günlük hareket alışkanlıklarını geliştirmelerine yardımcı olmaktır.
+StepPulse'ın temel amacı, ek bir akıllı saat veya giyilebilir cihaz zorunluluğu olmadan kullanıcıların günlük hareket alışkanlıklarını geliştirmelerine yardımcı olmaktır.
 
 ## Projenin Amacı
 
 Günlük fiziksel aktiviteyi takip etmek, sağlıklı yaşam alışkanlıkları oluşturmanın önemli adımlarından biridir.
 
-StepPulse, günlük adım takibi ile aktif yürüyüş kaydını tek uygulamada birleştirir.
+StepPulse, günlük adım takibi ile aktif yürüyüş kaydını tek bir uygulamada birleştirir.
 
 Uygulama iki temel kullanım senaryosuna odaklanır:
 
-1. Pasif takip: Kullanıcı, günlük adım ve aktivite verilerini uygulama üzerinden görüntüler.
-2. Aktif yürüyüş: Kullanıcı bir yürüyüş seansı başlatarak GPS üzerinden rotasını, yürüyüş süresini ve mesafesini takip eder.
+1. **Pasif takip:** Kullanıcı, günlük adım ve aktivite verilerini uygulama üzerinden görüntüler.
+2. **Aktif yürüyüş:** Kullanıcı bir yürüyüş seansı başlatarak GPS üzerinden rotasını, yürüyüş süresini ve mesafesini takip eder.
 
 GPS yalnızca konum gerektiren yürüyüş ve rota özelliklerinde kullanılır. Günlük adım sayısının temel kaynağı GPS değildir.
 
@@ -68,9 +68,8 @@ Kullanıcı profili, kişiselleştirilmiş aktivite verilerinin ve tahmini kalor
 
 ### 6. Kullanıcı Arayüzü
 
-- Açık tema
-- Koyu tema
-- Özel uygulama logosu
+- Açık ve koyu tema desteği
+- Özel uygulama logosu ve ikonu
 - Splash ekranı
 - Onboarding ekranı
 - Kullanıcı bilgi alma ekranı
@@ -78,6 +77,7 @@ Kullanıcı profili, kişiselleştirilmiş aktivite verilerinin ve tahmini kalor
 - Yürüyüş ekranı
 - Harita ekranı
 - İstatistik ekranı
+- Aktivite geçmişi ekranı
 - Profil ve ayarlar ekranları
 
 ## Kullanılan Teknolojiler
@@ -98,53 +98,114 @@ Kullanıcı profili, kişiselleştirilmiş aktivite verilerinin ve tahmini kalor
 | Flutter Timezone | Saat dilimi işlemleri |
 | Build Runner | Kod üretimi |
 
+## Proje Mimarisi
+
+StepPulse, **Feature-First (Özellik Odaklı Mimari)** yaklaşımını benimser.
+
+Bu mimaride uygulama genelinde kullanılan ortak altyapı bileşenleri `core/` klasöründe, belirli bir işleve ait ekranlar ve bileşenler ise `features/` klasöründe organize edilir.
+
+Bu yaklaşım, uygulamanın modüler, okunabilir, sürdürülebilir ve genişletilebilir olmasını hedefler.
+
+### Klasör Yapısı
+
+```text
 lib/
 ├── core/
-│   └── Uygulama genelinde kullanılan ortak yapılar
+│   ├── constants/       # Uygulama genelindeki sabit değerler
+│   ├── database/        # Drift ve yerel veritabanı işlemleri
+│   ├── router/          # GoRouter ile sayfa yönlendirmeleri
+│   ├── services/        # Sensör, sağlık, GPS ve bildirim servisleri
+│   ├── theme/           # Açık/koyu tema ve renk tanımları
+│   ├── utils/           # Yardımcı fonksiyonlar
+│   └── widgets/         # Ortak ve yeniden kullanılabilir bileşenler
 │
-├── routes/
-│   └── Sayfa yönlendirmeleri
+├── features/
+│   ├── history/         # Geçmiş yürüyüş ve aktivite kayıtları
+│   ├── home/
+│   │   ├── screens/     # Ana sayfa ekranları
+│   │   └── widgets/     # Ana sayfaya özel bileşenler
+│   ├── onboarding/      # İlk açılış ve kullanıcı karşılama
+│   ├── profile/         # Kullanıcı profili ve kişisel ayarlar
+│   ├── statistics/      # Günlük, haftalık ve aylık istatistikler
+│   └── walking/         # Aktif yürüyüş, GPS ve rota takibi
 │
-├── screens/
-│   └── Kullanıcı arayüzü ekranları
-│
-├── widgets/
-│   └── Yeniden kullanılabilir arayüz bileşenleri
-│
-├── models/
-│   └── Veri modelleri
-│
-├── repositories/
-│   └── Veri erişim katmanı
-│
-├── services/
-│   └── Sensör, sağlık, GPS ve bildirim servisleri
-│
-└── main.dart
-    └── Uygulama başlangıç noktası
+└── main.dart            # Uygulamanın başlangıç noktası
+```
+
+### 1. Core – Ortak Altyapı
+
+`core/` klasörü, uygulamanın birden fazla özelliği tarafından kullanılan ortak yapıları içerir.
+
+- `constants/`: Uygulama genelinde kullanılan sabit değerler.
+- `database/`: Drift ile SQLite veritabanı yönetimi.
+- `router/`: GoRouter aracılığıyla ekranlar arası navigasyon.
+- `services/`: Sensör, sağlık verileri, GPS ve bildirim servisleri.
+- `theme/`: Açık ve koyu tema yapılandırmaları.
+- `utils/`: Ortak yardımcı fonksiyonlar.
+- `widgets/`: Birden fazla ekranda kullanılabilen arayüz bileşenleri.
+
+### 2. Features – Özellik Modülleri
+
+`features/` klasörü, uygulamanın kullanıcıya sunduğu işlevleri birbirinden ayırır.
+
+| Modül | Sorumluluk |
+|---|---|
+| `home/` | Günlük adım, kalori, mesafe ve hedef bilgileri |
+| `walking/` | Aktif yürüyüş, GPS ve rota takibi |
+| `history/` | Geçmiş yürüyüş ve aktivite kayıtları |
+| `statistics/` | Günlük, haftalık ve aylık istatistikler |
+| `profile/` | Kullanıcı profili ve kişisel tercihler |
+| `onboarding/` | İlk kullanım ve kullanıcı bilgilendirme akışı |
+
+Her özellik kendi ekranlarını ve yalnızca o özelliğe ait arayüz bileşenlerini barındırabilir.
+
+### Neden Feature-First?
+
+Bu mimarinin tercih edilmesinin temel nedenleri:
+
+- Her özelliğin kendi klasöründe geliştirilebilmesi
+- Proje büyüdükçe dosya yönetiminin kolaylaşması
+- Bir özelliğe ait dosyaların birlikte tutulması
+- Ortak bileşenlerin tekrar kullanılabilmesi
+- Kodun okunabilirliğinin artırılması
+- Yeni özelliklerin daha kolay eklenebilmesi
+- Test ve bakım süreçlerinin kolaylaştırılması
+
+Feature-First yaklaşımı, gereksiz mimari katmanlar oluşturmadan uygulamanın büyümesini destekler.
 
 ## Adım Takibi ve Veri Yönetimi
 
-StepPulse, cihaz sensörleri ile platform sağlık servislerini birlikte değerlendiren hibrit bir veri yönetimi yaklaşımına sahiptir.
+StepPulse, cihaz sensörleri ile platform sağlık servislerini birlikte değerlendiren hibrit bir veri yönetimi yaklaşımını hedefler.
 
 ### 1. Cihaz Sensörleri
 
 Desteklenen cihazlarda pedometre sensörlerinden adım verileri alınabilir.
 
+Bu yaklaşım, ek bir akıllı saat veya giyilebilir cihaz olmadan adım takibini destekler.
+
 ### 2. Sağlık Servisleri
 
 Platforma göre aşağıdaki servislerle entegrasyon hedeflenmektedir:
 
-- iOS: Apple HealthKit
-- Android: Health Connect
+- **iOS:** Apple HealthKit
+- **Android:** Health Connect
 
-Bu servisler aracılığıyla, gerekli izinler verildiğinde geçmiş aktivite kayıtlarına erişilebilir.
+Bu servisler aracılığıyla, gerekli izinler verildiğinde mevcut ve geçmiş aktivite kayıtlarına erişilebilir.
+
+Sağlık verilerinin kullanılabilirliği, işletim sistemi ve cihaz özelliklerine bağlıdır.
 
 ### 3. Yerel Veritabanı
 
 Drift kullanılarak uygulamaya ait yapılandırılmış veriler cihaz üzerinde saklanabilir.
 
-SQLite tabanlı bu yaklaşım, yerel veri sorgulama ve yönetimini destekler.
+SQLite tabanlı bu yaklaşım:
+
+- Yerel veri yönetimini
+- Aktivite kayıtlarının saklanmasını
+- Geçmiş verilerin sorgulanmasını
+- İnternet bağlantısı gerektirmeyen yerel veri işlemlerini
+
+destekler.
 
 ### 4. Kullanıcı Tercihleri
 
@@ -181,7 +242,7 @@ Bu ayrım, gereksiz konum kullanımını azaltmayı ve pil tüketimini daha kont
 - Android Studio veya Visual Studio Code
 - Git
 - Android Emulator veya fiziksel Android cihaz
-- iOS için macOS ve Xcode
+- iOS geliştirme için macOS ve Xcode
 
 ### 1. Projeyi Klonlayın
 
@@ -256,28 +317,34 @@ StepPulse, kullanılan özelliklere göre işletim sisteminden belirli izinler t
 
 StepPulse, açık ve koyu tema desteği sunacak şekilde tasarlanmıştır.
 
-Tema sistemi, uygulamanın farklı ekranlarında ortak renk ve stil kullanımını destekler.
+Tema yapılandırmaları `core/theme/` altında merkezi olarak yönetilir.
 
-Bu yaklaşım sayesinde kullanıcı arayüzünün tutarlı ve sürdürülebilir olması hedeflenir.
+Bu yaklaşım sayesinde:
+
+- Uygulama genelinde ortak renk sistemi kullanılır.
+- Ekranlar arasında görsel tutarlılık sağlanır.
+- Tema değişiklikleri merkezi olarak yönetilebilir.
+- Kullanıcı deneyimi farklı görünüm tercihlerine uyarlanabilir.
 
 ## Proje Durumu
 
 StepPulse aktif geliştirme aşamasındadır.
 
-Mevcut geliştirme kapsamı:
+### Mevcut Geliştirme Kapsamı
 
 - Flutter proje altyapısı
-- Uygulama klasör mimarisi
-- Ekran ve navigasyon yapısı
+- Feature-First klasör mimarisi
+- GoRouter ile navigasyon altyapısı
 - Splash ve onboarding tasarımı
 - Kullanıcı profili
 - Açık ve koyu tema
 - Drift veritabanı altyapısı
 - Adım ve sağlık verisi entegrasyonu
 - Yürüyüş ve harita modülleri
+- Aktivite geçmişi ve istatistik ekranları
 - Bildirim yönetimi
 
-Özelliklerin platformlar üzerindeki davranışları cihaz desteğine ve geliştirme durumuna göre değişebilir.
+Özelliklerin platformlar üzerindeki davranışları cihaz desteğine, izinlere ve geliştirme durumuna göre değişebilir.
 
 ## Planlanan Geliştirmeler
 
@@ -287,8 +354,9 @@ Mevcut geliştirme kapsamı:
 - Kişiselleştirilmiş aktivite hedefleri
 - Yürüyüş geçmişinin geliştirilmesi
 - Pil tüketimi optimizasyonu
-- Kapsamlı uygulama testleri
-- Kullanıcı deneyimi iyileştirmeleri
+- Unit ve Widget testleri
+- Performans iyileştirmeleri
+- Kullanıcı deneyimi geliştirmeleri
 
 ## Platform Desteği
 
@@ -305,6 +373,7 @@ Mevcut geliştirme kapsamı:
 - Mesafe hesaplamaları kullanılan veri kaynağına göre değişebilir.
 - Sensör ve sağlık verileri cihazdan cihaza farklılık gösterebilir.
 - GPS doğruluğu çevresel koşullardan etkilenebilir.
+- Bazı özellikler kullanıcı izinlerine bağlıdır.
 - StepPulse tıbbi teşhis veya tedavi amacıyla geliştirilmemiştir.
 
 ## Lisans
