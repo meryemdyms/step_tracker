@@ -98,11 +98,6 @@ Kullanıcı profili, kişiselleştirilmiş aktivite verilerinin ve tahmini kalor
 | Flutter Timezone | Saat dilimi işlemleri |
 | Build Runner | Kod üretimi |
 
-## Proje Mimarisi
-
-StepPulse, Flutter uygulamasındaki farklı sorumlulukların ayrılması amacıyla modüler bir klasör yapısı kullanır.
-
-```text
 lib/
 ├── core/
 │   └── Uygulama genelinde kullanılan ortak yapılar
@@ -127,21 +122,6 @@ lib/
 │
 └── main.dart
     └── Uygulama başlangıç noktası
-```
-
-### Mimari Yaklaşım
-
-Uygulamada sorumlulukların ayrılması prensibi benimsenmiştir.
-
-- Screens: Kullanıcının gördüğü ekranları oluşturur.
-- Widgets: Tekrar kullanılabilir arayüz bileşenlerini içerir.
-- Services: Platform servisleri ve dış kaynaklarla iletişim kurar.
-- Repositories: Veri erişim işlemlerini soyutlar.
-- Models: Uygulamada kullanılan veri yapılarını tanımlar.
-- Routes: Sayfalar arası yönlendirmeyi yönetir.
-- Core: Tema ve uygulama genelinde kullanılan ortak yapıları içerir.
-
-Bu yaklaşım, uygulamanın bakımını kolaylaştırmayı ve yeni özelliklerin mevcut kodu minimum düzeyde etkilemesini hedefler.
 
 ## Adım Takibi ve Veri Yönetimi
 
