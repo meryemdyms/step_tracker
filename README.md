@@ -1,173 +1,338 @@
-# StepPulse
 
-**StepPulse**, Android ve iOS için Flutter ile geliştirilmiş, çapraz platformlu bir adım sayma ve yürüyüş aktivitesi uygulamasıdır.
+# StepPulse – Adım Takip ve Yürüyüş Uygulaması
 
-Uygulama, kullanıcıların günlük fiziksel aktivitelerini takip etmelerine, yürüyüş seanslarını kaydetmelerine, kişisel adım hedefleri belirlemelerine ve ilerlemelerini sade ve kullanımı kolay bir arayüz üzerinden incelemelerine yardımcı olur.
+StepPulse, Flutter ve Dart kullanılarak Android ve iOS platformları için geliştirilen bir adım takip ve yürüyüş aktivitesi uygulamasıdır.
 
-StepPulse, akıllı saat veya ek giyilebilir cihaz gerektirmeden erişilebilir bir yürüyüş deneyimi sunmaya odaklanır.
+Uygulama; kullanıcıların günlük adım sayılarını takip etmelerini, yürüyüş aktivitelerini kaydetmelerini, kişisel hedefler oluşturmalarını ve fiziksel aktivite geçmişlerini incelemelerini sağlar.
+
+StepPulse'ın temel amacı, ek bir akıllı saat veya giyilebilir cihaz zorunluluğu olmadan, kullanıcıların günlük hareket alışkanlıklarını geliştirmelerine yardımcı olmaktır.
+
+## Projenin Amacı
+
+Günlük fiziksel aktiviteyi takip etmek, sağlıklı yaşam alışkanlıkları oluşturmanın önemli adımlarından biridir.
+
+StepPulse, günlük adım takibi ile aktif yürüyüş kaydını tek uygulamada birleştirir.
+
+Uygulama iki temel kullanım senaryosuna odaklanır:
+
+1. Pasif takip: Kullanıcı, günlük adım ve aktivite verilerini uygulama üzerinden görüntüler.
+2. Aktif yürüyüş: Kullanıcı bir yürüyüş seansı başlatarak GPS üzerinden rotasını, yürüyüş süresini ve mesafesini takip eder.
+
+GPS yalnızca konum gerektiren yürüyüş ve rota özelliklerinde kullanılır. Günlük adım sayısının temel kaynağı GPS değildir.
 
 ## Özellikler
 
-### Adım Takibi
-- Günlük adım sayısı takibi
-- Özelleştirilebilir günlük adım hedefleri
-- Görsel hedef ilerleme göstergesi
-- Tahmini kalori ve mesafe bilgisi
-- Desteklenen cihaz sağlık verileriyle entegrasyon
+### 1. Günlük Adım Takibi
 
-### Yürüyüş Aktivitesi
-- GPS tabanlı yürüyüş seansı takibi
-- Etkileşimli harita üzerinde yürüyüş rotası görselleştirme
-- Yürüyüş seanslarını başlatma ve durdurma
-- Yürüyüş süresi ve mesafe takibi
-- Yürüyüş aktivite geçmişi
+- Günlük adım sayısını görüntüleme
+- Kişiselleştirilebilir günlük adım hedefi
+- Hedef ilerlemesini görsel olarak takip etme
+- Tahmini kalori hesaplama
+- Tahmini yürüyüş mesafesi
+- Cihaz sensörleri ve desteklenen sağlık servislerinden veri okuma
 
-### Aktivite İstatistikleri
+### 2. Aktif Yürüyüş Takibi
+
+- Yürüyüş seansı başlatma ve durdurma
+- GPS ile konum takibi
+- Harita üzerinde yürüyüş rotasını görüntüleme
+- Yürüyüş süresini takip etme
+- Kat edilen mesafeyi hesaplama
+- Geçmiş yürüyüş aktivitelerini inceleme
+
+### 3. Aktivite İstatistikleri
+
 - Günlük aktivite özeti
-- Haftalık aktivite istatistikleri
+- Haftalık adım istatistikleri
 - Aylık aktivite istatistikleri
-- Geçmiş adım verilerinin görselleştirilmesi
+- Geçmiş aktivite verilerini görüntüleme
+- Aktivite ilerlemesini grafiklerle inceleme
 
-### Kişisel Profil
-- Kişisel bilgi yönetimi
-- Boy, kilo ve yaş bilgileri
-- Özel günlük adım hedefleri
-- Uygulama tercihleri
+### 4. Kullanıcı Profili
 
-### Bildirimler
+- Kullanıcı bilgilerini kaydetme
+- Yaş, boy, kilo ve cinsiyet bilgileri
+- Günlük adım hedefi belirleme
+- Profil bilgilerini güncelleme
+- Uygulama tercihlerini yönetme
+
+Kullanıcı profili, kişiselleştirilmiş aktivite verilerinin ve tahmini kalori hesaplamalarının oluşturulmasında kullanılır.
+
+### 5. Bildirim Sistemi
+
 - Günlük yürüyüş hatırlatıcıları
-- Yapılandırılabilir hatırlatma saatleri
-- Günlük adım hedefi tamamlama bildirimleri
-- Bildirim izni yönetimi
+- Hatırlatma saatlerini ayarlama
+- Adım hedefi tamamlama bildirimleri
+- Bildirim izinlerini yönetme
+- Yerel bildirim desteği
 
-### Görünüm
-- Açık ve koyu tema desteği
-- Özel uygulama ikonu ve açılış ekranı (splash screen)
-- Duyarlı (responsive) Flutter arayüzü
+### 6. Kullanıcı Arayüzü
 
-## Teknoloji Yığını
+- Açık tema
+- Koyu tema
+- Özel uygulama logosu
+- Splash ekranı
+- Onboarding ekranı
+- Kullanıcı bilgi alma ekranı
+- Ana sayfa
+- Yürüyüş ekranı
+- Harita ekranı
+- İstatistik ekranı
+- Profil ve ayarlar ekranları
 
-| Teknoloji | Amaç |
+## Kullanılan Teknolojiler
+
+| Teknoloji | Kullanım Amacı |
 |---|---|
-| Flutter & Dart | Çapraz platformlu mobil geliştirme |
-| Drift (SQLite) | Yerel veri saklama |
-| Health | HealthKit ve Health Connect entegrasyonu |
-| Pedometer | Cihaz adım sensörü entegrasyonu |
-| Geolocator | GPS konum takibi |
-| Flutter Map | Etkileşimli harita görselleştirme |
-| GoRouter | Navigasyon ve yönlendirme |
-| SharedPreferences | Kullanıcı ayarları ve tercihleri |
-| Flutter Local Notifications | Yerel bildirimler |
-| Timezone | Saat dilimine duyarlı zamanlama |
+| Flutter | Çapraz platformlu mobil uygulama geliştirme |
+| Dart | Uygulama programlama dili |
+| Drift | SQLite tabanlı yerel veritabanı |
+| Health | Apple HealthKit ve Android Health Connect |
+| Pedometer | Cihaz adım sensörlerinden veri okuma |
+| Geolocator | GPS ve konum servisleri |
+| Flutter Map | Harita ve rota görselleştirme |
+| LatLong2 | Coğrafi koordinat işlemleri |
+| GoRouter | Ekranlar arası navigasyon |
+| SharedPreferences | Yerel kullanıcı tercihleri |
+| Flutter Local Notifications | Yerel bildirim yönetimi |
+| Flutter Timezone | Saat dilimi işlemleri |
+| Build Runner | Kod üretimi |
 
-## Mimari
+## Proje Mimarisi
 
-StepPulse, sorumlulukların ayrıldığı modüler bir Flutter proje yapısını takip eder.
+StepPulse, Flutter uygulamasındaki farklı sorumlulukların ayrılması amacıyla modüler bir klasör yapısı kullanır.
 
 ```text
 lib/
 ├── core/
+│   └── Uygulama genelinde kullanılan ortak yapılar
+│
 ├── routes/
+│   └── Sayfa yönlendirmeleri
+│
 ├── screens/
+│   └── Kullanıcı arayüzü ekranları
+│
 ├── widgets/
+│   └── Yeniden kullanılabilir arayüz bileşenleri
+│
 ├── models/
+│   └── Veri modelleri
+│
 ├── repositories/
+│   └── Veri erişim katmanı
+│
 ├── services/
+│   └── Sensör, sağlık, GPS ve bildirim servisleri
+│
 └── main.dart
+    └── Uygulama başlangıç noktası
 ```
 
-Uygulama; kullanıcı arayüzü bileşenlerini, navigasyonu, veri erişimini ve platforma özgü servisleri birbirinden ayırarak sürdürülebilirliği ve okunabilirliği artırır.
+### Mimari Yaklaşım
 
-### Veri Yönetimi
+Uygulamada sorumlulukların ayrılması prensibi benimsenmiştir.
 
-StepPulse, adım takibi için hibrit bir yaklaşım kullanır:
+- Screens: Kullanıcının gördüğü ekranları oluşturur.
+- Widgets: Tekrar kullanılabilir arayüz bileşenlerini içerir.
+- Services: Platform servisleri ve dış kaynaklarla iletişim kurar.
+- Repositories: Veri erişim işlemlerini soyutlar.
+- Models: Uygulamada kullanılan veri yapılarını tanımlar.
+- Routes: Sayfalar arası yönlendirmeyi yönetir.
+- Core: Tema ve uygulama genelinde kullanılan ortak yapıları içerir.
 
-- Cihaz sensörleri, desteklendiği durumlarda adım bilgisi sağlar.
-- Platform sağlık servisleri, mevcut geçmiş aktivite verilerine erişim sağlar.
-- Drift, yerel uygulama verilerini yönetir.
-- SharedPreferences, hafif tercihleri ve ayarları saklar.
+Bu yaklaşım, uygulamanın bakımını kolaylaştırmayı ve yeni özelliklerin mevcut kodu minimum düzeyde etkilemesini hedefler.
 
-Sağlık verilerinin kullanılabilirliği; cihaz desteğine, izinlere ve platform kısıtlamalarına bağlıdır.
+## Adım Takibi ve Veri Yönetimi
 
-## Başlarken
+StepPulse, cihaz sensörleri ile platform sağlık servislerini birlikte değerlendiren hibrit bir veri yönetimi yaklaşımına sahiptir.
+
+### 1. Cihaz Sensörleri
+
+Desteklenen cihazlarda pedometre sensörlerinden adım verileri alınabilir.
+
+### 2. Sağlık Servisleri
+
+Platforma göre aşağıdaki servislerle entegrasyon hedeflenmektedir:
+
+- iOS: Apple HealthKit
+- Android: Health Connect
+
+Bu servisler aracılığıyla, gerekli izinler verildiğinde geçmiş aktivite kayıtlarına erişilebilir.
+
+### 3. Yerel Veritabanı
+
+Drift kullanılarak uygulamaya ait yapılandırılmış veriler cihaz üzerinde saklanabilir.
+
+SQLite tabanlı bu yaklaşım, yerel veri sorgulama ve yönetimini destekler.
+
+### 4. Kullanıcı Tercihleri
+
+SharedPreferences üzerinden aşağıdaki gibi hafif ayarlar saklanabilir:
+
+- Tema tercihi
+- Günlük adım hedefi
+- Bildirim tercihleri
+- Uygulama ayarları
+
+Veri erişimi; cihaz desteğine, kullanıcı izinlerine, işletim sistemi kısıtlamalarına ve ilgili servislerin kullanılabilirliğine bağlıdır.
+
+## Yürüyüş ve GPS Yönetimi
+
+StepPulse, günlük adım takibi ile GPS tabanlı yürüyüş kaydını birbirinden ayırır.
+
+Günlük adım takibi için sürekli GPS kullanılması hedeflenmez.
+
+GPS aşağıdaki işlemlerde kullanılır:
+
+- Aktif yürüyüş sırasında konum alma
+- Yürüyüş rotasını oluşturma
+- Harita üzerinde konumları gösterme
+- GPS noktalarından yürüyüş mesafesi hesaplama
+
+Bu ayrım, gereksiz konum kullanımını azaltmayı ve pil tüketimini daha kontrollü yönetmeyi amaçlar.
+
+## Kurulum
 
 ### Gereksinimler
 
 - Flutter SDK
 - Dart SDK
 - Android Studio veya Visual Studio Code
-- iOS geliştirme için Xcode
-- Android emülatörü veya fiziksel cihaz / iOS simülatörü veya fiziksel iPhone
+- Git
+- Android Emulator veya fiziksel Android cihaz
+- iOS için macOS ve Xcode
 
-### Kurulum
-
-Depoyu klonlayın:
+### 1. Projeyi Klonlayın
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-cd YOUR_REPOSITORY
+git clone https://github.com/meryemdyms/step_tracker.git
 ```
 
-Bağımlılıkları yükleyin:
+### 2. Proje Klasörüne Geçin
+
+```bash
+cd step_tracker
+```
+
+### 3. Bağımlılıkları Yükleyin
 
 ```bash
 flutter pub get
 ```
 
-Gerekli dosyaları oluşturun:
+### 4. Gerekli Kodları Oluşturun
+
+Drift tarafından kullanılan üretilmiş dosyalar için:
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-Uygulamayı çalıştırın:
+### 5. Bağlı Cihazları Listeleyin
+
+```bash
+flutter devices
+```
+
+### 6. Uygulamayı Başlatın
 
 ```bash
 flutter run
 ```
 
-Bağlı bir iPhone üzerinde release derlemesi için:
+### iOS Üzerinde Çalıştırma
+
+iOS bağımlılıklarının kurulması gerekiyorsa:
 
 ```bash
-flutter run --release
+cd ios
+pod install
+cd ..
 ```
 
-## İzinler
+Ardından:
 
-Platforma ve etkinleştirilen özelliklere bağlı olarak StepPulse şu izinleri isteyebilir:
+```bash
+flutter run
+```
 
-- Fiziksel aktivite veya hareket izinleri
-- Yürüyüş rotaları için konum izinleri
-- Sağlık verisi okuma izinleri
-- Bildirim izinleri
+Fiziksel iPhone üzerinde çalıştırmak için Xcode üzerinden uygun geliştirme ekibi ve kod imzalama ayarları yapılandırılmalıdır.
 
-Sağlık servisi entegrasyonu, desteklenen yerlerde isteğe bağlıdır. Bazı işlevler izinlerin kullanılabilirliğine bağlı olabilir.
+## Uygulama İzinleri
+
+StepPulse, kullanılan özelliklere göre işletim sisteminden belirli izinler talep edebilir.
+
+| İzin | Kullanım Amacı |
+|---|---|
+| Fiziksel aktivite | Adım sensörü verileri |
+| Sağlık verileri | Geçmiş aktivite kayıtları |
+| Konum | GPS tabanlı yürüyüş takibi |
+| Bildirim | Hatırlatıcılar ve hedef bildirimleri |
+
+İzinler, ilgili özelliklerin kullanılabilmesi için gerektiğinde talep edilir.
+
+## Tema Yönetimi
+
+StepPulse, açık ve koyu tema desteği sunacak şekilde tasarlanmıştır.
+
+Tema sistemi, uygulamanın farklı ekranlarında ortak renk ve stil kullanımını destekler.
+
+Bu yaklaşım sayesinde kullanıcı arayüzünün tutarlı ve sürdürülebilir olması hedeflenir.
 
 ## Proje Durumu
 
-StepPulse şu anda aktif geliştirme aşamasındadır.
+StepPulse aktif geliştirme aşamasındadır.
 
-### Planlanan İyileştirmeler
+Mevcut geliştirme kapsamı:
 
-- Kişiselleştirilmiş adım hedefi önerileri
-- Daha ayrıntılı aktivite içgörüleri
-- Geliştirilmiş yürüyüş alışkanlığı takibi
-- Ek aktivite ilerleme özetleri
-- Gelişmiş arka plan aktivite yönetimi
+- Flutter proje altyapısı
+- Uygulama klasör mimarisi
+- Ekran ve navigasyon yapısı
+- Splash ve onboarding tasarımı
+- Kullanıcı profili
+- Açık ve koyu tema
+- Drift veritabanı altyapısı
+- Adım ve sağlık verisi entegrasyonu
+- Yürüyüş ve harita modülleri
+- Bildirim yönetimi
+
+Özelliklerin platformlar üzerindeki davranışları cihaz desteğine ve geliştirme durumuna göre değişebilir.
+
+## Planlanan Geliştirmeler
+
+- Adım verilerinin daha tutarlı senkronizasyonu
+- Arka planda aktivite takibinin iyileştirilmesi
+- Daha ayrıntılı haftalık ve aylık analizler
+- Kişiselleştirilmiş aktivite hedefleri
+- Yürüyüş geçmişinin geliştirilmesi
+- Pil tüketimi optimizasyonu
+- Kapsamlı uygulama testleri
+- Kullanıcı deneyimi iyileştirmeleri
 
 ## Platform Desteği
 
-| Platform | Hedef |
+| Platform | Durum |
 |---|---|
-| Android | Desteklenen geliştirme hedefi |
-| iOS | Desteklenen geliştirme hedefi |
+| Android | Hedef platform |
+| iOS | Hedef platform |
 | Web | Hedeflenmiyor |
-| macOS | Üretim için hedeflenmiyor |
+| macOS | Üretim hedefi değil |
+
+## Önemli Notlar
+
+- Kalori değerleri tahminidir.
+- Mesafe hesaplamaları kullanılan veri kaynağına göre değişebilir.
+- Sensör ve sağlık verileri cihazdan cihaza farklılık gösterebilir.
+- GPS doğruluğu çevresel koşullardan etkilenebilir.
+- StepPulse tıbbi teşhis veya tedavi amacıyla geliştirilmemiştir.
 
 ## Lisans
 
-Bu proje için herhangi bir açık kaynak lisansı belirtilmemiştir.
+Proje için henüz açık kaynak lisansı tanımlanmamıştır.
 
 ---
+
+StepPulse – Her Adımda İlerle
 
 Flutter ve Dart ile geliştirilmiştir.
